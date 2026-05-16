@@ -1,0 +1,21 @@
+.navigation-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+}
+
+.navigation-nav {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.navigation-nav a {
+  color: #111;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.navigation-nav a:hover {
+  text-decoration: underline;
+}

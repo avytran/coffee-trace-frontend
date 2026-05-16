@@ -1,0 +1,16 @@
+.notfound-page {
+  padding: 32px;
+}
+
+.notfound-page p {
+  line-height: 1.6;
+}
+
+.notfound-page a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.notfound-page a:hover {
+  text-decoration: underline;
+}
