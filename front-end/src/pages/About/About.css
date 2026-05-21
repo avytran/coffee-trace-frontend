@@ -1,0 +1,14 @@
+.about-page {
+  padding: 32px;
+}
+
+.about-page p {
+  line-height: 1.75;
+  max-width: 740px;
+}
+
+.about-page code {
+  background: #f6f8fa;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
