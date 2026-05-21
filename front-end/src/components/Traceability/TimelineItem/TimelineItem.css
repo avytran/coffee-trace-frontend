@@ -1,0 +1,12 @@
+/* TimelineItem.css */
+
+/* Node circle color override (uses Tailwind inline but kept here for specificity) */
+.timeline-node {
+  background-color: #1B4332; /* forest-900 */
+}
+
+/* Hover lift effect on card */
+.timeline-item:hover .timeline-node {
+  box-shadow: 0 0 0 4px rgba(74, 157, 125, 0.2);
+  transition: box-shadow 0.2s ease;
+}
