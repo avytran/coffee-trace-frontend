@@ -1,0 +1,27 @@
+/* Explorer.css */
+
+/* Animated Flowing Dashed Line on Timeline */
+.dash-flow {
+  stroke-dasharray: 10, 10;
+  animation: flow 20s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #FDF8F5; }
+::-webkit-scrollbar-thumb { background: #DDB892; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #B08968; }
