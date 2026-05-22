@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export default function AgentDashboard() {
   const { currentRole } = useWeb3();
 
-  // Danh sách dữ liệu giả lập để hiển thị trên Dashboard
+  
   const stats = [
     { id: 1, title: 'Lô hàng đang quản lý', count: '12 Lô', color: 'bg-blue-500' },
     { id: 2, title: 'Chờ duyệt sơ chế', count: '3 Lô', color: 'bg-yellow-500' },
@@ -14,7 +14,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      {/* Thanh chào mừng theo Quyền hạn */}
+      {}
       <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-l-4 border-green-600 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Bảng Điều Khiển Tác Nhân</h1>
@@ -25,7 +25,7 @@ export default function AgentDashboard() {
         </Link>
       </div>
 
-      {/* Thống kê dạng Card lưới */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {stats.map((item) => (
           <div key={item.id} className="p-6 bg-white rounded-xl shadow-md flex items-center justify-between">
@@ -38,7 +38,7 @@ export default function AgentDashboard() {
         ))}
       </div>
 
-      {/* Danh sách công việc cần làm gấp */}
+      {}
       <div className="bg-white rounded-xl shadow-md p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-4">Danh sách công việc chuỗi cung ứng cần xử lý</h3>
         <div className="overflow-x-auto">
