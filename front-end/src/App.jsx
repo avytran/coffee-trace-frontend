@@ -1,23 +1,21 @@
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import Navigation from './components/Navigation/Navigation.jsx'
-import Home from './pages/Home/Home.jsx'
-import About from './pages/About/About.jsx'
-import NotFound from './pages/NotFound/NotFound.jsx'
-import './App.css'
+import { Routes, Route } from 'react-router-dom';
+import Navbar from './components/Common/Navbar';
+import Footer from './components/Common/Footer';
+import Home from './pages/Home';
+import PublicDashboard from './pages/PublicDashboard';
 
-function App() {
+export default function App() {
   return (
-    <>
-      <Navigation />
-      <main className="app-main">
+    <div className="flex flex-col min-h-screen bg-brand-lightcream text-forest-900 font-sans relative overflow-x-hidden">
+      <Navbar />
+      <main className="flex-grow pt-20">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/"          element={<Home />} />
+          <Route path="/dashboard" element={<PublicDashboard />} />
+          {/* Future routes will be registered here by other team members */}
         </Routes>
       </main>
-    </>
-  )
+      <Footer />
+    </div>
+  );
 }
-
-export default App
