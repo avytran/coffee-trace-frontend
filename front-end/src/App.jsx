@@ -3,6 +3,8 @@ import Navbar from './components/Common/Navbar';
 import Footer from './components/Common/Footer';
 import Home from './pages/Home';
 import PublicDashboard from './pages/PublicDashboard';
+import Explorer from './pages/Explorer';
+import AdminControl from './pages/AdminControl';
 
 export default function App() {
   return (
@@ -12,7 +14,8 @@ export default function App() {
         <Routes>
           <Route path="/"          element={<Home />} />
           <Route path="/dashboard" element={<PublicDashboard />} />
-          {/* Future routes will be registered here by other team members */}
+          <Route path="/trace" element={<Explorer />} />
+          <Route path="/admin" element={<AdminControl />} />
         </Routes>
       </main>
       <Footer />

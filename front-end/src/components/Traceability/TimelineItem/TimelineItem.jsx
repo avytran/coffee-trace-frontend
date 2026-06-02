@@ -118,7 +118,7 @@ const TimelineItem = ({ item }) => {
               <i className="fa-regular fa-copy"></i>
             </button>
           </div>
-          
+          <a
             href={item.etherscanUrl || "#"}
             target="_blank"
             rel="noopener noreferrer"

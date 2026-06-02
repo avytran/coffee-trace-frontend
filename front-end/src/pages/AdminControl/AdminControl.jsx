@@ -234,48 +234,7 @@ const AdminControl = () => {
       {/* Background Texture */}
       <div className="fixed inset-0 pointer-events-none z-[-1] bg-grain mix-blend-multiply opacity-50"></div>
 
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 glass-panel border-b border-coffee-200/50 transition-all duration-300">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
-          <a href="#" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-600 to-forest-900 flex items-center justify-center shadow-lg shadow-forest-900/20 group-hover:scale-105 transition-transform">
-              <i className="fa-solid fa-seedling text-white text-xl"></i>
-            </div>
-            <span className="font-serif text-2xl font-bold text-forest-900 tracking-tight">ROBUSTRACE</span>
-          </a>
-          <nav className="hidden xl:flex items-center gap-1">
-            <a href="#" className="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors">Trang Chủ</a>
-            <a href="#" className="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors">Bảng Điều Khiển</a>
-            <a href="#" className="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors">Tra Cứu Minh Bạch</a>
-            <div className="w-px h-4 bg-coffee-300 mx-2"></div>
-            <a href="#" className="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors flex items-center gap-2">
-              <i className="fa-solid fa-layer-group text-xs"></i> Workspace
-            </a>
-            <a href="#" className="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors flex items-center gap-2">
-              <i className="fa-solid fa-boxes-stacked text-xs"></i> Lô Hàng
-            </a>
-            <a href="#" className="px-4 py-2 rounded-lg bg-coffee-100 text-forest-900 font-bold text-sm transition-colors flex items-center gap-2">
-              <i className="fa-solid fa-shield-halved text-xs"></i> Quản Trị
-            </a>
-          </nav>
-          <div className="flex items-center gap-4">
-            <button className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl border border-forest-500 bg-forest-50 text-forest-800 font-medium hover:bg-forest-100 transition-all text-sm">
-              <i className="fa-solid fa-user-circle"></i> Chọn Vai Trò
-            </button>
-            <button className="relative group overflow-hidden rounded-xl p-[1px]">
-              <span className="absolute inset-0 bg-gradient-to-r from-forest-400 via-coffee-400 to-forest-600 rounded-xl opacity-100 transition-opacity"></span>
-              <div className="relative flex items-center gap-2 px-6 py-2.5 bg-forest-900 text-white rounded-xl font-medium text-sm transition-all group-hover:bg-opacity-90 ring-2 ring-forest-500 ring-offset-2 ring-offset-coffee-50">
-                <i className="fa-solid fa-check-circle text-green-400"></i> 0x12...34ab
-              </div>
-            </button>
-            <button className="xl:hidden text-forest-900 text-2xl p-2">
-              <i className="fa-solid fa-bars"></i>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-grow pt-28 pb-24 flex items-start justify-center min-h-[calc(100vh-80px)]">
+      <main className="flex-grow pt-10 pb-24 flex items-start justify-center min-h-[calc(100vh-80px)]">
         <div className="max-w-[1440px] w-full mx-auto px-6 lg:px-12 flex flex-col lg:flex-row gap-8">
 
           {/* Sidebar */}
@@ -720,64 +679,6 @@ const AdminControl = () => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="bg-forest-900 text-forest-200 pt-20 pb-10 border-t border-forest-800 mt-auto">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
-            <div className="lg:col-span-2">
-              <a href="#" className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-forest-800 flex items-center justify-center">
-                  <i className="fa-solid fa-seedling text-coffee-300 text-xl"></i>
-                </div>
-                <span className="font-serif text-2xl font-bold text-white tracking-tight">ROBUSTRACE</span>
-              </a>
-              <p className="text-forest-300 text-sm leading-relaxed max-w-sm mb-6">
-                Nền tảng truy xuất nguồn gốc cà phê ứng dụng công nghệ Blockchain, minh bạch hóa chuỗi cung ứng và nâng tầm giá trị nông sản Việt.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i className="fa-brands fa-twitter"></i></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i className="fa-brands fa-linkedin-in"></i></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i className="fa-brands fa-github"></i></a>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Sản phẩm</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Trang Chủ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Bảng Điều Khiển</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tra Cứu Lô Hàng</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Kết Nối Ví</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Giải pháp</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Cho Nông Dân</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cho Nhà Rang Xay</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cho Doanh Nghiệp</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Smart Contracts</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Tài nguyên</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Tài liệu API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Hướng dẫn sử dụng</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Hỗ trợ</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-forest-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-forest-400">
-            <p>&copy; 2026 ROBUSTRACE. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
-              <a href="#" className="hover:text-white transition-colors">Điều khoản dịch vụ</a>
-            </div>
-          </div>
-        </div>
-      </footer>
 
     </div>
   );
