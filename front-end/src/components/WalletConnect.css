@@ -1,0 +1,75 @@
+.wallet-connect-card {
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  margin: 40px auto;
+  color: #f3f4f6;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.card-header h2 {
+  color: #10b981;
+  margin-top: 0;
+  font-size: 24px;
+}
+.card-header p {
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.btn-connect {
+  width: 100%;
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-connect:hover {
+  background-color: #059669;
+}
+.btn-connect:disabled {
+  background-color: #374151;
+  cursor: not-allowed;
+}
+.session-details {
+  border-top: 1px solid #1f2937;
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.status-badge {
+  display: inline-block;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.address-display {
+  font-size: 13px;
+  color: #d1d5db;
+}
+.jwt-status {
+  font-size: 13px;
+  color: #60a5fa;
+}
+.btn-disconnect {
+  width: 100%;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+.btn-disconnect:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}

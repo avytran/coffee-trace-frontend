@@ -1,0 +1,94 @@
+.transaction-signing-panel {
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  margin: 40px auto;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+}
+.panel-desc {
+  color: #9ca3af;
+  font-size: 14px;
+}
+.execution-scope {
+  background-color: #030712;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.execution-scope code {
+  color: #60a5fa;
+  font-weight: bold;
+}
+.btn-execute {
+  width: 100%;
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-execute:hover {
+  background-color: #1d4ed8;
+}
+.btn-execute:disabled {
+  background-color: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+.status-loader {
+  text-align: center;
+  padding: 20px;
+  background-color: #1f2937;
+  border-radius: 8px;
+}
+.hash-log {
+  font-size: 12px;
+  color: #9ca3af;
+  word-break: break-all;
+  background: #000;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+.execution-success-message {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid #10b981;
+  padding: 20px;
+  border-radius: 8px;
+}
+.success-title {
+  color: #34d399;
+  font-weight: bold;
+  margin: 0;
+}
+.btn-reset {
+  margin-top: 15px;
+  background: #374151;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.spinner {
+  border: 3px solid #374151;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

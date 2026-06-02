@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Trace - Bảng Điều Khiển Công Khai (Public Dashboard)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        coffee: {
+                            50: '#FDF8F5',
+                            100: '#F7EBE1',
+                            200: '#EED5C1',
+                            300: '#E4BEA0',
+                            400: '#DDB892', /* latte brown */
+                            500: '#B08968',
+                            600: '#9C6644',
+                            700: '#7F5539',
+                            800: '#5C3A21',
+                            900: '#4A2E1B',
+                        },
+                        forest: {
+                            50: '#F2F7F5',
+                            100: '#E1EFE8',
+                            200: '#C4DFD2',
+                            300: '#9BCCB7',
+                            400: '#6CB297',
+                            500: '#4A9D7D',
+                            600: '#357F63',
+                            700: '#2A6550',
+                            800: '#245242',
+                            900: '#1B4332', /* deep forest green */
+                        },
+                        cream: '#FFFDD0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    backgroundImage: {
+                        'grain': 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%220.05%22/%3E%3C/svg%3E")',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FDF8F5; }
+        ::-webkit-scrollbar-thumb { background: #DDB892; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #B08968; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark-glass {
+            background: rgba(27, 67, 50, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(221, 184, 146, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="m-0 p-0 bg-coffee-50 text-forest-900 font-sans relative overflow-x-hidden min-h-screen flex flex-col">
+    <!-- Background Texture -->
+    <div class="fixed inset-0 pointer-events-none z-[-1] bg-grain mix-blend-multiply opacity-50"></div>
+
+    <!-- Header / Navigation -->
+    <header id="header" class="fixed top-0 w-full z-50 glass-panel border-b border-coffee-200/50 transition-all duration-300">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-600 to-forest-900 flex items-center justify-center shadow-lg shadow-forest-900/20 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-seedling text-white text-xl"></i>
+                </div>
+                <span class="font-serif text-2xl font-bold text-forest-900 tracking-tight">ROBUSTRACE</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden xl:flex items-center gap-1">
+                <a href="#" class="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors">Trang Chủ</a>
+                <a href="#" class="px-4 py-2 rounded-lg bg-forest-50 text-forest-900 font-medium text-sm transition-colors">Bảng Điều Khiển</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors">Tra Cứu Minh Bạch</a>
+                <div class="w-px h-4 bg-coffee-300 mx-2"></div>
+                <a href="#" class="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-xs"></i> Workspace
+                </a>
+                <a href="#" class="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked text-xs"></i> Lô Hàng
+                </a>
+                <a href="#" class="px-4 py-2 rounded-lg text-forest-700 hover:bg-coffee-100 hover:text-forest-900 font-medium text-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-xs"></i> Quản Trị
+                </a>
+            </nav>
+
+            <!-- CTA / Wallet -->
+            <div class="flex items-center gap-4">
+                <button class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl border border-coffee-300 bg-white text-forest-800 font-medium hover:border-forest-500 hover:shadow-md transition-all text-sm">
+                    <i class="fa-solid fa-user-circle"></i> Chọn Vai Trò
+                </button>
+                <button class="relative group overflow-hidden rounded-xl p-[1px]">
+                    <span class="absolute inset-0 bg-gradient-to-r from-forest-400 via-coffee-400 to-forest-600 rounded-xl opacity-70 group-hover:opacity-100 transition-opacity"></span>
+                    <div class="relative flex items-center gap-2 px-6 py-2.5 bg-forest-900 text-white rounded-xl font-medium text-sm transition-all group-hover:bg-opacity-90">
+                        <i class="fa-solid fa-wallet"></i> Kết Nối Ví
+                    </div>
+                </button>
+                <button class="xl:hidden text-forest-900 text-2xl p-2">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-16">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-12">
+            
+            <!-- Page Header & Filters -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 class="font-serif text-3xl font-bold text-forest-900 mb-2">Tổng Quan Chuỗi Cung Ứng</h1>
+                    <p class="text-forest-700 text-sm">Dữ liệu thời gian thực từ mạng lưới ROBUSTRACE</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="glass-panel flex items-center p-1 rounded-xl">
+                        <button class="px-4 py-2 rounded-lg bg-white text-forest-900 text-sm font-medium shadow-sm">Hôm nay</button>
+                        <button class="px-4 py-2 rounded-lg text-forest-700 hover:text-forest-900 text-sm font-medium transition-colors">Tuần này</button>
+                        <button class="px-4 py-2 rounded-lg text-forest-700 hover:text-forest-900 text-sm font-medium transition-colors">Tháng này</button>
+                    </div>
+                    <button class="px-4 py-2 rounded-xl border border-coffee-300 bg-white text-forest-800 font-medium hover:border-forest-500 transition-all text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-filter"></i> Lọc Nâng Cao
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- KPI 1 -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm text-forest-600 font-medium mb-1">Tổng Sản Lượng (Tấn)</p>
+                            <h3 class="text-3xl font-bold text-forest-900 font-serif">12,450</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-forest-100 flex items-center justify-center text-forest-600">
+                            <i class="fa-solid fa-weight-scale"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-forest-500 font-medium flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up text-xs"></i> +15.3%</span>
+                        <span class="text-forest-400">so với tháng trước</span>
+                    </div>
+                </div>
+
+                <!-- KPI 2 -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm text-forest-600 font-medium mb-1">Lô Hàng Đang Xử Lý</p>
+                            <h3 class="text-3xl font-bold text-forest-900 font-serif">842</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-coffee-100 flex items-center justify-center text-coffee-600">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-forest-500 font-medium flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up text-xs"></i> +5.2%</span>
+                        <span class="text-forest-400">so với tháng trước</span>
+                    </div>
+                </div>
+
+                <!-- KPI 3 -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm text-forest-600 font-medium mb-1">Nông Hộ Tham Gia</p>
+                            <h3 class="text-3xl font-bold text-forest-900 font-serif">2,150</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-forest-900 flex items-center justify-center text-white">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-forest-500 font-medium flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up text-xs"></i> +120</span>
+                        <span class="text-forest-400">nông hộ mới</span>
+                    </div>
+                </div>
+
+                <!-- KPI 4 -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm text-forest-600 font-medium mb-1">Giá Trị Giao Dịch (ETH)</p>
+                            <h3 class="text-3xl font-bold text-forest-900 font-serif">458.2</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-coffee-400 flex items-center justify-center text-white">
+                            <i class="fa-brands fa-ethereum"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-coffee-600 font-medium flex items-center gap-1"><i class="fa-solid fa-arrow-trend-down text-xs"></i> -2.4%</span>
+                        <span class="text-forest-400">so với tháng trước</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts & Heatmap Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Production Trend Chart -->
+                <div class="lg:col-span-2 dashboard-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-forest-900 text-lg">Biểu Đồ Sản Lượng & Giao Dịch</h3>
+                        <div class="flex items-center gap-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-forest-600"></span>
+                                <span class="text-forest-700">Robusta</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-coffee-400"></span>
+                                <span class="text-forest-700">Arabica</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="productionChart" class="w-full h-[350px]"></div>
+                </div>
+
+                <!-- Dak Lak Heatmap -->
+                <div class="dashboard-card p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-forest-900 text-lg">Bản Đồ Nhiệt: Đắk Lắk</h3>
+                        <button class="text-forest-500 hover:text-forest-700"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                    <div class="flex-grow relative rounded-xl overflow-hidden bg-forest-50 border border-coffee-100 flex items-center justify-center">
+                        <!-- Placeholder for Map - In a real app, use Mapbox/Leaflet -->
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')] bg-cover bg-center opacity-40 mix-blend-luminosity"></div>
+                        <div class="absolute inset-0 bg-gradient-to-tr from-forest-900/40 to-coffee-400/20"></div>
+                        
+                        <!-- Heatmap Overlay Mockup -->
+                        <div class="absolute z-10 w-full h-full p-4">
+                            <!-- Tooltip Mockup -->
+                            <div class="absolute top-[30%] left-[40%] bg-white p-3 rounded-lg shadow-lg border border-coffee-200 text-sm z-20 transform -translate-x-1/2 -translate-y-full mb-2">
+                                <div class="font-bold text-forest-900 border-b border-coffee-100 pb-1 mb-1">Huyện Cư M'gar</div>
+                                <div class="text-forest-600">Sản lượng: <span class="font-semibold text-forest-800">4,200 Tấn</span></div>
+                                <div class="text-forest-600">Nông hộ: <span class="font-semibold text-forest-800">850</span></div>
+                                <div class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-coffee-200 rotate-45"></div>
+                            </div>
+                            <!-- Hotspots -->
+                            <div class="absolute top-[30%] left-[40%] w-12 h-12 bg-coffee-500/60 rounded-full blur-md animate-pulse"></div>
+                            <div class="absolute top-[50%] left-[60%] w-16 h-16 bg-forest-500/50 rounded-full blur-md"></div>
+                            <div class="absolute top-[70%] left-[30%] w-10 h-10 bg-coffee-400/50 rounded-full blur-md"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs text-forest-600">
+                        <span>Thấp</span>
+                        <div class="flex-grow mx-4 h-2 rounded-full bg-gradient-to-r from-forest-100 via-coffee-300 to-coffee-600"></div>
+                        <span>Cao</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Status -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Activity Feed -->
+                <div class="dashboard-card p-6 lg:col-span-1">
+                    <h3 class="font-bold text-forest-900 text-lg mb-6">Hoạt Động Mới Nhất</h3>
+                    <div class="space-y-6">
+                        <!-- Item 1 -->
+                        <div class="flex gap-4">
+                            <div class="relative">
+                                <div class="w-10 h-10 rounded-full bg-forest-100 flex items-center justify-center text-forest-600 z-10 relative">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <div class="absolute top-10 bottom-[-24px] left-1/2 w-px bg-coffee-200 transform -translate-x-1/2"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-forest-900">Lô hàng <span class="text-coffee-600">#LOT-8492</span> đã được xác thực</p>
+                                <p class="text-xs text-forest-500 mt-1">Bởi: HTX Nông Nghiệp Ea Tul</p>
+                                <p class="text-xs text-forest-400 mt-1">10 phút trước</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Item 2 -->
+                        <div class="flex gap-4">
+                            <div class="relative">
+                                <div class="w-10 h-10 rounded-full bg-coffee-100 flex items-center justify-center text-coffee-600 z-10 relative">
+                                    <i class="fa-solid fa-truck"></i>
+                                </div>
+                                <div class="absolute top-10 bottom-[-24px] left-1/2 w-px bg-coffee-200 transform -translate-x-1/2"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-forest-900">Bắt đầu vận chuyển <span class="text-coffee-600">#LOT-8490</span></p>
+                                <p class="text-xs text-forest-500 mt-1">Điểm đến: Nhà máy rang xay Trung Nguyên</p>
+                                <p class="text-xs text-forest-400 mt-1">45 phút trước</p>
+                            </div>
+                        </div>
+
+                        <!-- Item 3 -->
+                        <div class="flex gap-4">
+                            <div class="relative">
+                                <div class="w-10 h-10 rounded-full bg-forest-900 flex items-center justify-center text-white z-10 relative">
+                                    <i class="fa-brands fa-ethereum"></i>
+                                </div>
+                                <div class="absolute top-10 bottom-[-24px] left-1/2 w-px bg-coffee-200 transform -translate-x-1/2"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-forest-900">Smart Contract được cập nhật</p>
+                                <p class="text-xs text-forest-500 mt-1">TxHash: 0x7f8c...3a9b</p>
+                                <p class="text-xs text-forest-400 mt-1">2 giờ trước</p>
+                            </div>
+                        </div>
+
+                        <!-- Item 4 -->
+                        <div class="flex gap-4">
+                            <div class="relative">
+                                <div class="w-10 h-10 rounded-full bg-coffee-400 flex items-center justify-center text-white z-10 relative">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-forest-900">Nông hộ mới đăng ký tham gia</p>
+                                <p class="text-xs text-forest-500 mt-1">Khu vực: Buôn Hồ, Đắk Lắk</p>
+                                <p class="text-xs text-forest-400 mt-1">5 giờ trước</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full mt-6 py-3 rounded-xl border border-coffee-200 text-forest-700 text-sm font-medium hover:bg-coffee-50 transition-colors">
+                        Xem Tất Cả
+                    </button>
+                </div>
+
+                <!-- Data Table -->
+                <div class="dashboard-card p-0 lg:col-span-2 overflow-hidden flex flex-col">
+                    <div class="p-6 border-b border-coffee-100 flex items-center justify-between">
+                        <h3 class="font-bold text-forest-900 text-lg">Lô Hàng Đang Di Chuyển</h3>
+                        <button class="text-forest-600 hover:text-forest-900 text-sm font-medium">Chi tiết <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-forest-50 text-forest-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-4 font-medium">Mã Lô</th>
+                                    <th class="px-6 py-4 font-medium">Loại</th>
+                                    <th class="px-6 py-4 font-medium">Khối Lượng</th>
+                                    <th class="px-6 py-4 font-medium">Giai Đoạn</th>
+                                    <th class="px-6 py-4 font-medium">Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-coffee-100">
+                                <tr class="hover:bg-coffee-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-forest-900">#LOT-8492</td>
+                                    <td class="px-6 py-4 text-forest-700">Robusta Sơ Chế Ướt</td>
+                                    <td class="px-6 py-4 text-forest-700">2.5 Tấn</td>
+                                    <td class="px-6 py-4 text-forest-700">Đang Vận Chuyển</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coffee-100 text-coffee-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-coffee-500"></span> Đang xử lý
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-coffee-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-forest-900">#LOT-8491</td>
+                                    <td class="px-6 py-4 text-forest-700">Arabica Cầu Đất</td>
+                                    <td class="px-6 py-4 text-forest-700">1.2 Tấn</td>
+                                    <td class="px-6 py-4 text-forest-700">Lưu Kho</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-forest-100 text-forest-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-forest-500"></span> Hoàn thành
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-coffee-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-forest-900">#LOT-8490</td>
+                                    <td class="px-6 py-4 text-forest-700">Robusta Honey</td>
+                                    <td class="px-6 py-4 text-forest-700">3.8 Tấn</td>
+                                    <td class="px-6 py-4 text-forest-700">Kiểm Định Chất Lượng</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coffee-100 text-coffee-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-coffee-500"></span> Đang xử lý
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-coffee-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-forest-900">#LOT-8489</td>
+                                    <td class="px-6 py-4 text-forest-700">Robusta Natural</td>
+                                    <td class="px-6 py-4 text-forest-700">5.0 Tấn</td>
+                                    <td class="px-6 py-4 text-forest-700">Rang Xay</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-forest-100 text-forest-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-forest-500"></span> Hoàn thành
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-coffee-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-forest-900">#LOT-8488</td>
+                                    <td class="px-6 py-4 text-forest-700">Arabica Đặc Sản</td>
+                                    <td class="px-6 py-4 text-forest-700">0.5 Tấn</td>
+                                    <td class="px-6 py-4 text-forest-700">Đóng Gói</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Chờ xử lý
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer id="footer" class="bg-forest-900 text-forest-200 pt-20 pb-10 border-t border-forest-800 mt-auto">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+                <div class="lg:col-span-2">
+                    <a href="#" class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-forest-800 flex items-center justify-center">
+                            <i class="fa-solid fa-seedling text-coffee-300 text-xl"></i>
+                        </div>
+                        <span class="font-serif text-2xl font-bold text-white tracking-tight">ROBUSTRACE</span>
+                    </a>
+                    <p class="text-forest-300 text-sm leading-relaxed max-w-sm mb-6">
+                        Nền tảng truy xuất nguồn gốc cà phê ứng dụng công nghệ Blockchain, minh bạch hóa chuỗi cung ứng và nâng tầm giá trị nông sản Việt.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-forest-800 flex items-center justify-center hover:bg-coffee-400 hover:text-forest-900 transition-colors"><i class="fa-brands fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Sản phẩm</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Trang Chủ</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Bảng Điều Khiển</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Tra Cứu Lô Hàng</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Kết Nối Ví</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Giải pháp</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Cho Nông Dân</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Cho Nhà Rang Xay</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Cho Doanh Nghiệp</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Smart Contracts</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Tài nguyên</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Tài liệu API</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Hướng dẫn sử dụng</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Hỗ trợ</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pt-8 border-t border-forest-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-forest-400">
+                <p>&copy; 2026 ROBUSTRACE. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-white transition-colors">Chính sách bảo mật</a>
+                    <a href="#" class="hover:text-white transition-colors">Điều khoản dịch vụ</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function initializeCharts() {
+            try {
+                // Production Chart Data
+                const trace1 = {
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    y: [1200, 1350, 1100, 1500, 1800, 2100, 2400, 2200, 1900, 1600, 1400, 1300],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Robusta',
+                    line: {
+                        color: '#357F63', // forest-600
+                        width: 3,
+                        shape: 'spline',
+                        smoothing: 1.3
+                    },
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(53, 127, 99, 0.1)'
+                };
+
+                const trace2 = {
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    y: [400, 450, 420, 480, 550, 600, 650, 620, 580, 500, 460, 430],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Arabica',
+                    line: {
+                        color: '#DDB892', // coffee-400
+                        width: 3,
+                        shape: 'spline',
+                        smoothing: 1.3
+                    },
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(221, 184, 146, 0.1)'
+                };
+
+                const layout = {
+                    margin: { t: 10, r: 10, b: 40, l: 40 },
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    showlegend: false,
+                    xaxis: {
+                        showgrid: false,
+                        tickfont: { color: '#7F5539' }, // forest-700
+                        linecolor: 'rgba(228, 190, 160, 0.3)' // coffee-300
+                    },
+                    yaxis: {
+                        showgrid: true,
+                        gridcolor: 'rgba(228, 190, 160, 0.2)', // coffee-300
+                        tickfont: { color: '#7F5539' },
+                        zeroline: false
+                    },
+                    hovermode: 'x unified'
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: false
+                };
+
+                Plotly.newPlot('productionChart', [trace1, trace2], layout, config);
+            } catch (error) {
+                console.error('Error initializing charts:', error);
+            }
+        }
+
+        window.addEventListener('load', initializeCharts);
+        setTimeout(initializeCharts, 1200);
+    </script>
+</body>
+</html>
