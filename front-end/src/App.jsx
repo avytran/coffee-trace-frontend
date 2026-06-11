@@ -4,7 +4,9 @@ import Footer from './components/Common/Footer';
 import Home from './pages/Home';
 import PublicDashboard from './pages/PublicDashboard';
 import Explorer from './pages/Explorer';
+import ConnectWallet from './pages/ConnectWallet';
 import AdminControl from './pages/AdminControl';
+import BatchesPage from './pages/BatchesPage';
 
 export default function App() {
   return (
@@ -15,7 +17,9 @@ export default function App() {
           <Route path="/"          element={<Home />} />
           <Route path="/dashboard" element={<PublicDashboard />} />
           <Route path="/trace" element={<Explorer />} />
+          <Route path="/connect" element={<ConnectWallet />} />
           <Route path="/admin" element={<AdminControl />} />
+          <Route path="/batches" element={<BatchesPage />} />
         </Routes>
       </main>
       <Footer />

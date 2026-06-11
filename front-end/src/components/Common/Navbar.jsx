@@ -84,12 +84,12 @@ export default function Navbar() {
             <i className="fa-solid fa-user-circle" /> Chọn Vai Trò
           </button>
 
-          <button className="relative group overflow-hidden rounded-xl p-[1px]">
+          <Link to="/connect" className="relative group overflow-hidden rounded-xl p-[1px]">
             <span className="absolute inset-0 bg-gradient-to-r from-forest-400 via-coffee-400 to-forest-600 rounded-xl opacity-70 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-2 px-6 py-2.5 bg-forest-900 text-white rounded-xl font-medium text-sm transition-all group-hover:bg-opacity-90">
               <i className="fa-solid fa-wallet" /> Kết Nối Ví
             </div>
-          </button>
+          </Link>
 
           {/* Mobile hamburger */}
           <button
@@ -126,9 +126,12 @@ export default function Navbar() {
             <button className="flex-1 py-2.5 rounded-xl border border-coffee-300 text-forest-800 font-medium text-sm">
               Chọn Vai Trò
             </button>
-            <button className="flex-1 py-2.5 rounded-xl bg-forest-900 text-white font-medium text-sm">
+            <Link
+              to="/connect"
+              className="flex-1 py-2.5 rounded-xl bg-forest-900 text-white font-medium text-sm text-center"
+            >
               Kết Nối Ví
-            </button>
+            </Link>
           </div>
         </div>
       )}
