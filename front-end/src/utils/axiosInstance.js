@@ -2,18 +2,22 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
-// Request Interceptor: tự động gắn Bearer Token vào mọi request
+// Request Interceptor: tự động gắn Bearer Token vào mọi request & đặt Content-Type hợp lý
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+    
+    // Chỉ đặt Content-Type cho JSON nếu dữ liệu không phải FormData
+    // FormData sẽ tự động đặt multipart/form-data với boundary
+    if (!(config.data instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)
@@ -25,8 +29,8 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token hết hạn → xóa token, redirect về login
-      localStorage.removeItem("access_token");
-      window.location.href = "/login";
+      localStorage.removeItem("token");
+      window.location.href = "/connect";
     }
     return Promise.reject(error);
   }

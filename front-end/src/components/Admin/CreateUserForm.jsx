@@ -9,22 +9,26 @@ import {
 } from "../../utils/web3Utils";
 import { getContractAddress, getContractABI } from "../../config/contracts";
 
-const REGISTRY_CONTRACT_ADDRESS = getContractAddress("REGISTRY");
-const REGISTRY_ABI = getContractABI("REGISTRY");
+// 🌟 THAY ĐỔI 1: Trỏ chính xác tới cấu hình của UserRegistry Contract mới
+const USER_REGISTRY_ADDRESS = getContractAddress("USER_REGISTRY");
+const USER_REGISTRY_ABI = getContractABI("USER_REGISTRY");
 
-// Bản đồ ánh xạ từ Role Enum của DB sang Số thứ tự (Index) trong Smart Contract
+// 🌟 THAY ĐỔI 2: Đồng bộ chuẩn chỉ số enum uint8 của UserRegistry.sol mới
 const ROLE_INDEX_MAP = {
-  ADMIN_ROLE: 0,
-  FARMER_ROLE: 1,
-  ROASTER_ROLE: 2,
-  DISTRIBUTOR_ROLE: 3
+  ADMIN: 0,
+  FARMER: 1,
+  COOPERATIVE: 2,
+  PROCESSOR: 3,
+  EXPORTER: 4,
+  RECEIVER: 5,
+  ANONYMOUS: 6
 };
 
 const CreateUserForm = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     wallet_address: "",
-    role: "FARMER_ROLE", 
+    role: "FARMER", // Đồng bộ key mặc định mới
   });
   
   const [submitting, setSubmitting] = useState(false);
@@ -75,12 +79,14 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       
       const provider = getEthersProvider();
       const signer = await getEthersSigner(provider);
-      const contract = createContract(REGISTRY_CONTRACT_ADDRESS, REGISTRY_ABI, signer);
+      
+      // 🌟 THAY ĐỔI 3: Khởi tạo thực thể Contract thông qua cấu hình UserRegistry mới
+      const contract = createContract(USER_REGISTRY_ADDRESS, USER_REGISTRY_ABI, signer);
       const roleIndex = ROLE_INDEX_MAP[formData.role];
       
-      setErrorMessage("Vui lòng mở ví MetaMask và ký xác nhận giao dịch (Xác nhận trả Gas)...");
+      setErrorMessage("Vui lòng mở ví MetaMask và ký xác nhận giao dịch (Admin trả Gas)...");
       
-      // Kích hoạt MetaMask Popup để Admin ký lệnh On-chain đăng ký user
+      // Kích hoạt MetaMask Popup để Admin ký lệnh On-chain đăng ký user vào UserRegistry.sol
       const tx = await contract.registerUser(walletAddress, roleIndex);
 
       setErrorMessage("Giao dịch đang được xử lý trên mạng lưới... Vui lòng đợi block xác nhận.");
@@ -91,7 +97,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
 
       setErrorMessage("Bước 3: Đang kích hoạt trạng thái tài khoản về Cơ sở dữ liệu...");
 
-      // ── BƯỚC 3: Sau khi block thành công, mới gọi API Webhook để chuyển đổi trạng thái thành ACTIVE
+      // ── BƯỚC 3: Sau khi block thành công, gọi API Webhook chuyển đổi trạng thái thành ACTIVE
       const syncResponse = await axiosInstance.post("/admin/users/sync-success", {
         userId: createdUserId,
         txHash: tx.hash
@@ -101,7 +107,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
         alert("Admin đã trả Gas thành công! Tài khoản đối tác đã được kích hoạt (ACTIVE) trên Blockchain & DB.");
         
         // Reset form sau khi hoàn tất chuỗi hành động hỗn hợp
-        setFormData({ name: "", wallet_address: "", role: "FARMER_ROLE" });
+        setFormData({ name: "", wallet_address: "", role: "FARMER" });
         setErrorMessage("");
         
         if (onSuccess) onSuccess(syncResponse.data);
@@ -128,10 +134,10 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
     <div className="glass-panel p-8 rounded-[2rem] border border-coffee-200 bg-white/95 max-w-xl mx-auto shadow-md">
       <div className="mb-6">
         <h2 className="text-xl font-serif font-bold text-forest-900 flex items-center gap-2">
-          <i className="fa-solid fa-signature text-forest-600"></i> Cấp Quyền & Tạo User (Admin Trả Gas)
+          <i className="fa-solid fa-signature text-forest-600"></i> Cấp Quyền & Tạo Đối Tác (Admin Trả Gas)
         </h2>
         <p className="text-xs text-forest-600 mt-1">
-          Hệ thống lưu thông tin tạm thời, sau đó ứng dụng sẽ kích hoạt ví <span className="font-semibold text-blue-600">MetaMask (Mạng Hardhat)</span> để ký duyệt hàm <code className="font-mono bg-coffee-100 px-1 rounded text-red-600">registerUser</code>.
+          Hệ thống lưu thông tin tạm thời, sau đó ứng dụng sẽ kích hoạt ví <span className="font-semibold text-blue-600">MetaMask</span> để ký duyệt hàm <code className="font-mono bg-coffee-100 px-1 rounded text-red-600">registerUser</code> trên <span className="font-semibold">UserRegistry</span> contract.
         </p>
       </div>
 
@@ -146,7 +152,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
         {/* Trường: name */}
         <div>
           <label className="block text-xs font-semibold text-forest-700 uppercase tracking-wider mb-2">
-            Họ và Tên / Tên cơ sở <span className="text-red-500">*</span>
+            Họ và Tên / Tên cơ sở đại diện <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -178,7 +184,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
         {/* Trường: role */}
         <div>
           <label className="block text-xs font-semibold text-forest-700 uppercase tracking-wider mb-2">
-            Vai trò Hệ Thống (role) <span className="text-red-500">*</span>
+            Vai trò Chuỗi Cung Ứng (role) <span className="text-red-500">*</span>
           </label>
           <select
             name="role"
@@ -187,10 +193,12 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
             onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm font-semibold focus:ring-2 focus:ring-forest-500 bg-white text-forest-900"
           >
-            <option value="FARMER_ROLE">Nông Dân (FARMER_ROLE)</option>
-            <option value="ROASTER_ROLE">Nhà Rang Xay (ROASTER_ROLE)</option>
-            <option value="DISTRIBUTOR_ROLE">Nhà Phân Phối (DISTRIBUTOR_ROLE)</option>
-            <option value="ADMIN_ROLE">Quản Trị Viên (ADMIN_ROLE)</option>
+            <option value="FARMER">Nông Dân (FARMER)</option>
+            <option value="COOPERATIVE">Hợp Tác Xã (COOPERATIVE)</option>
+            <option value="PROCESSOR">Nhà Máy Chế Biến (PROCESSOR)</option>
+            <option value="EXPORTER">Doanh Nghiệp Xuất Khẩu (EXPORTER)</option>
+            <option value="RECEIVER">Bên Nhập Khẩu / Thu Mua (RECEIVER)</option>
+            <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
           </select>
         </div>
 
@@ -212,7 +220,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           >
             {submitting ? (
               <>
-                <i className="fa-solid fa-circle-notch fa-spin"></i> Đang xử lý...
+                <i className="fa-solid fa-circle-notch fa-spin"></i> Đang ghi sổ cái...
               </>
             ) : (
               <>

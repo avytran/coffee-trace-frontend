@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Common/Navbar';
 import Footer from './components/Common/Footer';
 import Home from './pages/Home';
@@ -7,6 +7,7 @@ import Explorer from './pages/Explorer';
 import ConnectWallet from './pages/ConnectWallet';
 import AdminControl from './pages/AdminControl';
 import BatchesPage from './pages/BatchesPage';
+import { MemberRoute, AdminRoute } from './components/Common/ProtectedRoutes';
 
 export default function App() {
   return (
@@ -14,12 +15,20 @@ export default function App() {
       <Navbar />
       <main className="flex-grow pt-20">
         <Routes>
-          <Route path="/"          element={<Home />} />
+          <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<PublicDashboard />} />
           <Route path="/trace" element={<Explorer />} />
           <Route path="/connect" element={<ConnectWallet />} />
-          <Route path="/admin" element={<AdminControl />} />
-          <Route path="/batches" element={<BatchesPage />} />
+          
+          <Route element={<MemberRoute />}>
+            <Route path="/workspace" element={<BatchesPage />} />
+          </Route>
+
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminControl />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />

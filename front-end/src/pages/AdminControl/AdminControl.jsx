@@ -2,63 +2,8 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import "./AdminControl.css";
 import CreateUserForm from "../../components/Admin/CreateUserForm";
+import { getRoleStyles, getStatusStyles, getActionStyles } from "../../utils/getStyles";
 
-// ── 1. ĐỒNG BỘ ĐỒNG NHẤT ENUM THEO CHUẨN SMART CONTRACT & BACKEND DB ──────────
-const getRoleStyles = (role) => {
-  switch (role?.toUpperCase()) {
-    case "FARMER_ROLE":
-      return { bg: "bg-emerald-100", text: "text-emerald-800", label: "Nông Dân" };
-    case "ROASTER_ROLE":
-      return { bg: "bg-orange-100", text: "text-orange-800", label: "Nhà Rang Xay" };
-    case "DISTRIBUTOR_ROLE":
-      return { bg: "bg-indigo-100", text: "text-indigo-800", label: "Nhà Phân Phối" };
-    case "ADMIN_ROLE":
-      return { bg: "bg-blue-100", text: "text-blue-800", label: "Quản Trị Viên" };
-    default:
-      return { bg: "bg-gray-100", text: "text-gray-800", label: role || "Ẩn danh" };
-  }
-};
-
-const getStatusStyles = (status) => {
-  switch (status?.toUpperCase()) {
-    case "ACTIVE":
-    case "SUCCESS":
-      return { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", dot: "bg-green-500", icon: "fa-solid fa-circle-check", textClass: "text-green-600" };
-    case "PENDING":
-      return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500", icon: "fa-solid fa-circle-notch fa-spin", textClass: "text-amber-600" };
-    case "REVOKED":
-    case "FAILED":
-      return { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", dot: "bg-red-500", icon: "fa-solid fa-circle-xmark", textClass: "text-red-600" };
-    default:
-      return { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", dot: "bg-gray-500", icon: "fa-solid fa-circle", textClass: "text-gray-600" };
-  }
-};
-
-const getActionStyles = (tag) => {
-  if (tag?.includes("GRANT")) return { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-100" };
-  if (tag?.includes("REVOKE")) return { bg: "bg-red-50", text: "text-red-700", border: "border-red-100" };
-  if (tag?.includes("UPDATE")) return { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200" };
-  return { bg: "bg-green-50", text: "text-green-700", border: "border-green-100" };
-};
-
-// ── 2. MAPPING UTILITIES ────────────────────────────────────────────────────
-/**
- * Chuyển đổi role từ format API sang format component
- * API trả về: 'FARMER', 'ADMIN', 'ROASTER', 'DISTRIBUTOR'
- * Component dùng: 'FARMER_ROLE', 'ADMIN_ROLE', etc.
- */
-const mapRoleToComponent = (apiRole) => {
-  if (!apiRole) return "UNKNOWN_ROLE";
-  const roleMap = {
-    "FARMER": "FARMER_ROLE",
-    "ADMIN": "ADMIN_ROLE",
-    "ROASTER": "ROASTER_ROLE",
-    "DISTRIBUTOR": "DISTRIBUTOR_ROLE",
-  };
-  return roleMap[apiRole.toUpperCase()] || `${apiRole.toUpperCase()}_ROLE`;
-};
-
-// ── 3. MAIN COMPONENT ───────────────────────────────────────────────────────
 const AdminControl = () => {
   const [activeTab, setActiveTab] = useState("permissions");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -116,7 +61,7 @@ const AdminControl = () => {
         id: item.id,
         address: item.wallet_address,
         name: item.name,
-        role: mapRoleToComponent(item.role),
+        role: item.role,
         status: item.status,
       }));
 
@@ -322,6 +267,7 @@ const AdminControl = () => {
                       <option value="FARMER">Nông dân (FARMER)</option>
                       <option value="ROASTER">Nhà Rang Xay (ROASTER)</option>
                       <option value="DISTRIBUTOR">Nhà Phân Phối (DISTRIBUTOR)</option>
+                      <option value="EXPORTER">Nhà Xuất Khẩu (EXPORTER)</option>
                       <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
                     </select>
                   </div>

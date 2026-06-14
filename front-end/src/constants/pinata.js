@@ -1,0 +1,1 @@
+export const PINATA_GATEWAY = "https://gateway.pinata.cloud/ipfs/";

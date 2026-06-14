@@ -1,87 +1,17 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-
-const METAMASK = {
-  name: 'MetaMask',
-  icon: 'fa-fox',
-  description: 'Kết nối ví trình duyệt nhanh, bảo mật và phổ biến nhất.',
-  accent: 'from-orange-300 to-coffee-500',
-};
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useWeb3Auth } from '../context/Web3AuthContext';
 
 function shortenAddress(address) {
   return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
 }
 
 export default function ConnectWallet() {
-  const [account, setAccount] = useState(null);
-  const [network, setNetwork] = useState('Chưa kết nối');
-  const [connecting, setConnecting] = useState(false);
-  const [error, setError] = useState('');
-
-  const parseChainId = (chainId) => {
-    if (chainId === '0x1') return 'Ethereum Mainnet';
-    if (chainId === '0xaa36a7') return 'Sepolia Testnet';
-    if (chainId === '0x5') return 'Goerli Testnet';
-    return `Chain ID: ${chainId}`;
-  };
-
-  const connectMetaMask = async () => {
-    setError('');
-    if (!window.ethereum) {
-      setError('Không tìm thấy MetaMask. Vui lòng cài đặt MetaMask hoặc mở trong trình duyệt hỗ trợ.');
-      return;
-    }
-
-    try {
-      setConnecting(true);
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const [selected] = accounts;
-      setAccount(selected || null);
-
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      setNetwork(parseChainId(chainId));
-    } catch (err) {
-      if (err?.code === 4001) {
-        setError('Yêu cầu bị từ chối. Vui lòng xác nhận kết nối trong MetaMask.');
-      } else {
-        setError('Không thể kết nối MetaMask. Vui lòng thử lại.');
-      }
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!window.ethereum) return;
-
-    window.ethereum.request({ method: 'eth_accounts' })
-      .then((accounts) => {
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          window.ethereum.request({ method: 'eth_chainId' }).then((chainId) => {
-            setNetwork(parseChainId(chainId));
-          });
-        }
-      })
-      .catch((err) => console.error(err));
-
-    const handleAccountsChanged = (accounts) => {
-      setAccount(accounts[0] || null);
-      if (accounts.length === 0) setNetwork('Chưa kết nối');
-    };
-
-    const handleChainChanged = (chainId) => {
-      setNetwork(parseChainId(chainId));
-    };
-
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
-
-    return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      window.ethereum.removeListener('chainChanged', handleChainChanged);
-    };
-  }, []);
+  const navigate = useNavigate();
+  
+  const {
+    account, network, role, userData, authStatus, connecting, error, connectMetaMask
+  } = useWeb3Auth();
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-brand-lightcream text-forest-900 font-sans">
@@ -115,18 +45,29 @@ export default function ConnectWallet() {
                 <button
                   type="button"
                   onClick={connectMetaMask}
-                  className="rounded-full bg-forest-900 text-white px-8 py-3 text-sm font-semibold shadow-lg shadow-forest-900/10 hover:bg-forest-800 transition-colors"
+                  disabled={connecting}
+                  className="rounded-full bg-forest-900 text-white px-8 py-3 text-sm font-semibold shadow-lg shadow-forest-900/10 hover:bg-forest-800 transition-colors disabled:opacity-50"
                 >
-                  {connecting ? 'Đang kết nối...' : account ? 'Ví đã kết nối' : 'Kết nối MetaMask'}
+                  {connecting ? 'Đang xác thực...' : account ? 'Ví đã xác thực JWT' : 'Kết nối MetaMask'}
                 </button>
-                <Link
-                  to="/dashboard"
-                  className="rounded-full border border-coffee-300 bg-white px-8 py-3 text-sm font-semibold text-forest-900 hover:border-forest-500 transition-all"
-                >
-                  Xem Dashboard
-                </Link>
+                
+                {authStatus === 'ACTIVE' && (
+                  <Link
+                    to="/workspace"
+                    className="rounded-full border border-forest-500 bg-forest-50 px-8 py-3 text-sm font-semibold text-forest-900 hover:bg-forest-100 transition-all shadow-sm"
+                  >
+                    Vào Không Gian Làm Việc ({role}) →
+                  </Link>
+                )}
               </div>
-              {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+              
+              {error && (
+                <div className={`p-4 rounded-xl text-sm border ${
+                  authStatus === 'SUSPENDED' ? 'bg-red-50 text-red-800 border-red-200' : 'bg-amber-50 text-amber-800 border-amber-200'
+                }`}>
+                  <strong>⚠️ Thông báo hệ thống:</strong> {error}
+                </div>
+              )}
             </div>
 
             <div className="relative rounded-[2rem] border border-coffee-200 bg-white/95 p-8 shadow-2xl shadow-coffee-200/30 overflow-hidden">
@@ -136,40 +77,49 @@ export default function ConnectWallet() {
               <div className="relative z-10 space-y-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm uppercase text-coffee-500 tracking-[0.22em]">Trạng thái ví</p>
+                    <p className="text-sm uppercase text-coffee-500 tracking-[0.22em]">Trạng thái định danh</p>
                     <h2 className="text-2xl font-bold text-forest-900 mt-2">
-                      {account ? 'Đã liên kết' : 'Sẵn sàng kết nối'}
+                      {account ? (authStatus === 'ACTIVE' ? `Đối tác: ${role}` : 'Bị từ chối truy cập') : 'Sẵn sàng kết nối'}
                     </h2>
                   </div>
+                  
                   <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold border ${
-                    account ? 'bg-green-50 text-green-700 border-green-100' : 'bg-forest-50 text-forest-700 border-forest-100'
+                    authStatus === 'ACTIVE' 
+                      ? 'bg-green-50 text-green-700 border-green-100' 
+                      : authStatus === 'SUSPENDED'
+                      ? 'bg-red-50 text-red-700 border-red-100'
+                      : 'bg-forest-50 text-forest-700 border-forest-100'
                   }`}>
-                    <span className={`w-2.5 h-2.5 rounded-full ${account ? 'bg-green-500' : 'bg-forest-500'}`} />
-                    {account ? 'Đang hoạt động' : 'An toàn'}
+                    <span className={`w-2.5 h-2.5 rounded-full ${
+                      authStatus === 'ACTIVE' ? 'bg-green-500' : authStatus === 'SUSPENDED' ? 'bg-red-500' : 'bg-forest-500'
+                    }`} />
+                    {authStatus === 'ACTIVE' ? 'Đã xác thực JWT' : authStatus === 'SUSPENDED' ? 'Tạm khóa' : 'Chờ ví'}
                   </span>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-3xl bg-coffee-50 p-5 border border-coffee-100">
-                    <p className="text-xs uppercase tracking-[0.2em] text-coffee-500">Mạng</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-coffee-500">Mạng Blockchain</p>
                     <h3 className="mt-3 text-lg font-semibold text-forest-900">{network}</h3>
-                    <p className="mt-2 text-sm text-coffee-600">Kết nối trực tiếp với mạng lưới chính, bảo mật giao dịch và dữ liệu.</p>
+                    <p className="mt-2 text-sm text-coffee-600">Đồng bộ on-chain, ghi nhận dữ liệu lịch sử và chứng chỉ vùng trồng.</p>
                   </div>
                   <div className="rounded-3xl bg-forest-50 p-5 border border-forest-100">
-                    <p className="text-xs uppercase tracking-[0.2em] text-forest-500">Phiên</p>
-                    <h3 className="mt-3 text-lg font-semibold text-forest-900">{account ? shortenAddress(account) : 'Chưa có ví nào được chọn'}</h3>
-                    <p className="mt-2 text-sm text-forest-600">
-                      {account ? `Đã kết nối với MetaMask trên mạng này.` : 'Nhấn nút kết nối để chọn tài khoản trong MetaMask.'}
+                    <p className="text-xs uppercase tracking-[0.2em] text-forest-500">Thông tin đối tác</p>
+                    <h3 className="mt-3 text-sm font-mono font-semibold text-forest-900">
+                      {account ? shortenAddress(account) : 'Chưa chọn tài khoản ví'}
+                    </h3>
+                    <p className="mt-2 text-xs text-forest-600 leading-relaxed">
+                      {userData ? `Họ tên: ${userData.name}. Tài khoản liên kết hợp lệ trong chuỗi cung ứng.` : 'Nhấn nút kết nối để kiểm tra phân quyền tài khoản của bạn.'}
                     </p>
                   </div>
                 </div>
 
                 <div className="rounded-[1.75rem] bg-gradient-to-br from-coffee-100 via-brand-lightgreen to-forest-100 p-6 border border-coffee-200/80">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-coffee-700">Bước tiếp theo</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-coffee-700">Quy trình cấp quyền Web3</p>
                   <ol className="mt-4 space-y-3 text-sm text-coffee-700 leading-7 list-decimal list-inside pl-2">
-                    <li>Chọn ví và khởi tạo kết nối.</li>
-                    <li>Xác nhận yêu cầu trên ứng dụng ví.</li>
-                    <li>Quản lý quyền truy cập, quyền chia sẻ và lịch sử giao dịch.</li>
+                    <li>MetaMask cung cấp địa chỉ ví công khai.</li>
+                    <li>Người dùng thực hiện ký mã hóa một lần duy nhất nếu phiên làm việc cũ hết hạn.</li>
+                    <li>Token bảo mật được lưu giữ dài hạn để tối ưu trải nghiệm dApp.</li>
                   </ol>
                 </div>
               </div>
@@ -177,24 +127,6 @@ export default function ConnectWallet() {
           </div>
         </section>
       </div>
-
-      <section className="max-w-[1440px] mx-auto px-6 lg:px-12 pb-24">
-        <div className="group rounded-[2rem] border border-coffee-200 bg-white p-8 shadow-lg shadow-coffee-200/20 transition-transform hover:-translate-y-1">
-          <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${METAMASK.accent} text-white text-xl shadow-lg shadow-black/10`}>
-            <i className={`fa-brands ${METAMASK.icon}`} />
-          </div>
-          <h3 className="mt-6 text-xl font-semibold text-forest-900">{METAMASK.name}</h3>
-          <p className="mt-3 text-sm leading-7 text-coffee-700">{METAMASK.description}</p>
-          <button
-            type="button"
-            onClick={connectMetaMask}
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-forest-900 px-6 py-3 text-sm font-semibold text-white hover:bg-forest-800 transition-colors"
-          >
-            {connecting ? 'Đang kết nối...' : account ? 'MetaMask đã kết nối' : 'Kết nối MetaMask'}
-          </button>
-          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-        </div>
-      </section>
     </div>
   );
 }

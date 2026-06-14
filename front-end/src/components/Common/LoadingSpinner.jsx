@@ -1,38 +1,18 @@
-/**
- * LoadingSpinner
- * Variants: "full" (full-page overlay), "inline" (inline block), "card" (card-sized)
- */
-export default function LoadingSpinner({ variant = 'inline', message = 'Đang tải...' }) {
-  const spinner = (
-    <div className="flex flex-col items-center justify-center gap-3">
-      {/* Dual-ring coffee-themed spinner */}
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 rounded-full border-4 border-coffee-200" />
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-forest-600 animate-spin" />
-        <div className="absolute inset-[6px] rounded-full border-2 border-transparent border-b-coffee-400 animate-spin [animation-duration:0.8s] [animation-direction:reverse]" />
+import React from 'react';
+import { COLORS } from '../../constants/colors';
+
+export default function LoadingSpinner ({loadingStatus}) {
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md rounded-2xl p-6 transition-all duration-300">
+      <div className="relative flex items-center justify-center w-20 h-20 mb-4">
+        <div className="absolute w-16 h-16 border-4 border-dashed rounded-full animate-spin" style={{ borderColor: COLORS.forest900, animationDuration: '3s' }}></div>
+        <div className="absolute w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: COLORS.coffee600 }}></div>
+        <div className="w-4 h-4 rounded-full animate-pulse" style={{ background: COLORS.forest900 }}></div>
       </div>
-      {message && (
-        <span className="text-sm text-forest-600 font-medium animate-pulse">{message}</span>
-      )}
+      <p className="text-sm font-semibold tracking-wide text-center max-w-md animate-pulse" style={{ color: COLORS.forest900 }}>
+        {loadingStatus || "Hệ thống đang xử lý..."}
+      </p>
+      <span className="text-xs text-gray-400 mt-2">Vui lòng không tắt trình duyệt hoặc tải lại trang</span>
     </div>
-  );
-
-  if (variant === 'full') {
-    return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-brand-lightcream/80 backdrop-blur-sm">
-        {spinner}
-      </div>
-    );
-  }
-
-  if (variant === 'card') {
-    return (
-      <div className="w-full min-h-[280px] flex items-center justify-center rounded-2xl bg-white/60 border border-coffee-100">
-        {spinner}
-      </div>
-    );
-  }
-
-  // default: inline
-  return <div className="flex items-center justify-center py-8">{spinner}</div>;
+  )
 }
