@@ -10,8 +10,8 @@ const contractAbi = getContractABI("BATCH_REGISTRY");
 const contractAddress = getContractAddress("BATCH_REGISTRY");
 
 export default function CoopBatchActions({ lotInfo, onRefresh }) {
-    console.log(lotInfo);
-    
+    console.log(lotInfo?.owner.role);
+
     const [loading, setLoading] = useState(false);
 
     // Trạng thái hiển thị Modals
@@ -79,7 +79,7 @@ export default function CoopBatchActions({ lotInfo, onRefresh }) {
 
             // Bước 2: Kích hoạt ký và gửi giao dịch On-chain lên Smart Contract
             console.log("🔗 2. Đang mở MetaMask yêu cầu ký phê duyệt trạng thái mới...");
-            const tx = await contract.updateBatchStatus(lotInfo.id, 2);
+            const tx = await contract.updateBatchStatus(lotInfo.id, 4);
 
             console.log(`⏳ Giao dịch phê duyệt đang được khai thác... TxHash: ${tx.hash}`);
             const txReceipt = await tx.wait(); // Đợi block được đào thành công
@@ -196,7 +196,7 @@ export default function CoopBatchActions({ lotInfo, onRefresh }) {
 
         setLoading(true);
         try {
-            // Bước 1: Đẩy biên bản, vận đơn bàn giao lên mạng lưu trữ IPFS
+            // ── BƯỚC 1: ĐẨY BIÊN BẢN / VẬN ĐƠN BÀN GIAO LÊN IPFS ──
             const formDataPayload = new FormData();
             formDataPayload.append("batch_id", lotInfo.id);
             formDataPayload.append("processor_id", targetProcessor.id);
@@ -214,25 +214,32 @@ export default function CoopBatchActions({ lotInfo, onRefresh }) {
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(contractAddress, contractAbi, signer);
 
-            // Bước 2: Thực thi chuyển quyền quản lý, đổi trạng thái sang TRADING (4) trên Blockchain
-            console.log("🔗 2. Đang gọi MetaMask để xác thực ký chuyển giao quyền quản lý lô hàng...");
-            const tx = await contract.updateBatchStatus(lotInfo.id, 4);
+            // ── BƯỚC 2: THỰC THI GIAO DỊCH TRÊN BLOCKCHAIN ──
 
-            console.log(`⏳ Giao dịch chuyển giao đang được khai thác... TxHash: ${tx.hash}`);
-            const txReceipt = await tx.wait(); // Đồng bộ đợi xác thực giao dịch thành công
-            console.log("⛏️ Khai thác khối chuyển giao thành công!");
+            // A. Cập nhật trạng thái lô hàng sang TRADING (Index: 4)
+            console.log("🔗 2a. Đang gọi MetaMask cập nhật trạng thái lô hàng (TRADING)...");
+            const txStatus = await contract.updateBatchStatus(lotInfo.id, 4);
+            await txStatus.wait();
 
-            const finalTxHash = txReceipt ? txReceipt.hash : tx.hash;
+            // B. Chuyển quyền sở hữu tài sản (Wallet Address) sang Nhà chế biến
+            console.log(`🔗 2b. Đang ký chuyển quyền sở hữu sang ví: ${targetProcessor.wallet_address}...`);
+            const txOwnership = await contract.transferBatchOwnership(lotInfo.id, targetProcessor.wallet_address);
 
-            // Bước 3: Đồng bộ toàn bộ dữ liệu giao dịch cùng thông tin IPFS về PostgreSQL local
+            console.log(`⏳ Giao dịch đổi chủ đang được khai thác... TxHash: ${txOwnership.hash}`);
+            const receipt = await txOwnership.wait();
+            console.log("⛏️ Khai thác khối chuyển giao tài sản thành công!");
+
+            const realTxHash = receipt ? receipt.hash : txOwnership.hash;
+
+            // ── BƯỚC 3: ĐỒNG BỘ TOÀN BỘ DỮ LIỆU VỀ POSTGRESQL LOCAL ──
             console.log("💾 3. Tiến hành đồng bộ lịch sử bàn giao vào PostgreSQL...");
             try {
                 await axiosInstance.post('/cooperative/batches/save-transfer-db', {
                     batchId: lotInfo.id,
-                    status: 4, // TRADING
+                    status: "TRADING",
                     processorId: targetProcessor.id,
                     ipfsCid: serverPayload.ipfsCid,
-                    txHash: finalTxHash
+                    txHash: realTxHash
                 });
 
                 alert(`🎉 Đã bàn giao thành công lô hàng sang Nhà chế biến: ${targetProcessor.name}`);
@@ -240,7 +247,7 @@ export default function CoopBatchActions({ lotInfo, onRefresh }) {
                 onRefresh();
             } catch (dbErr) {
                 console.error("❌ Thất bại khi ghi nhận vào PostgreSQL:", dbErr);
-                alert(`On-chain bàn giao thành công nhưng lỗi đồng bộ cơ sở dữ liệu local: ${dbErr.response?.data?.message || dbErr.message}`);
+                alert(`On-chain bàn giao thành công (${realTxHash}) nhưng lỗi đồng bộ cơ sở dữ liệu local.`);
             }
 
         } catch (err) {
@@ -275,7 +282,7 @@ export default function CoopBatchActions({ lotInfo, onRefresh }) {
                     </>
                 )}
 
-                {lotInfo?.status === "PROCESSED" && !lotInfo?.owner.role === "COOPERATIVE" && (
+                {lotInfo?.status === "PROCESSED" && lotInfo?.owner.role === "COOPERATIVE" && (
                     <button
                         disabled={loading}
                         onClick={() => setShowTransferModal(true)}

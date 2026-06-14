@@ -36,6 +36,9 @@ export default function TransferNextOwnerModal({
         fetchTargets();
     }, [fetchTargetUrl]);
 
+    console.log(targets);
+    
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!selectedTarget.id || !selectedTarget.wallet_address) {

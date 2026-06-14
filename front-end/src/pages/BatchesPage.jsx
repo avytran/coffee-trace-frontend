@@ -13,8 +13,17 @@ import { BatchDetail } from "../components/Common/BatchDetail";
 
 import FarmerWorkspaceActions from "../components/Farmer/FarmerWorkspaceActions";
 import FarmerBatchActions from "../components/Farmer/FarmerBatchActions";
+
 import CoopWorkspaceActions from "../components/Cooperative/CoopWorkspaceActions";
 import CoopBatchActions from "../components/Cooperative/CoopBatchActions";
+
+import ProcessorWorkspaceActions from "../components/Processor/ProcessorWorkspaceActions";
+import ProcessorBatchActions from "../components/Processor/ProcessorBatchActions";
+
+import ExporterBatchActions from "../components/Exporter/ExporterBatchActions";
+import ExporterWorkspaceActions from "../components/Exporter/ExporterWorkspaceActions";
+import ReceiverBatchActions from "../components/Receiver/ReceiverBatchActions";
+import ReceiverWorkspaceActions from "../components/Receiver/ReceiverWorkspaceActions.jsx";
 
 export default function BatchesPage({ setPage }) {
   const { userData, account, role } = useWeb3Auth();
@@ -52,17 +61,30 @@ export default function BatchesPage({ setPage }) {
     setView("detail");
   };
 
+  const renderRoleActions = () => {
+    switch (role) {
+      case "FARMER":
+        return <FarmerBatchActions />
+      case "COOPERATIVE":
+        return <CoopBatchActions />
+      case "PROCESSOR":
+        return <ProcessorBatchActions />
+      case "EXPORTER":
+        return <ExporterBatchActions />
+      case "RECEIVER":
+        return <ReceiverBatchActions />
+      default:
+        return <></>;
+    }
+  };
+
   if (view === "detail" && selectedBatchId) {
     return (
       <div className="pt-6 pb-16 px-4 max-w-7xl mx-auto">
         <BatchDetail
           batchId={selectedBatchId}
           onBack={() => setView("list")}
-          actionComponent={
-            role === "COOPERATIVE"
-              ? <CoopBatchActions />
-              : <FarmerBatchActions />
-          }
+          actionComponent={renderRoleActions()}
         />
       </div>
     );
@@ -85,6 +107,45 @@ export default function BatchesPage({ setPage }) {
         />;
       case "COOPERATIVE":
         return <CoopWorkspaceActions
+          lots={lots}
+          setLots={setLots}
+          loading={loading}
+          error={error}
+          view={view}
+          setView={setView}
+          search={search}
+          setSearch={setSearch}
+          handleOpenDetail={handleOpenDetail}
+          fetchMyBatches={fetchMyBatches}
+        />;
+      case "PROCESSOR":
+        return <ProcessorWorkspaceActions
+          lots={lots}
+          setLots={setLots}
+          loading={loading}
+          error={error}
+          view={view}
+          setView={setView}
+          search={search}
+          setSearch={setSearch}
+          handleOpenDetail={handleOpenDetail}
+          fetchMyBatches={fetchMyBatches}
+        />;
+      case "EXPORTER":
+        return <ExporterWorkspaceActions
+          lots={lots}
+          setLots={setLots}
+          loading={loading}
+          error={error}
+          view={view}
+          setView={setView}
+          search={search}
+          setSearch={setSearch}
+          handleOpenDetail={handleOpenDetail}
+          fetchMyBatches={fetchMyBatches}
+        />;
+      case "RECEIVER":
+        return <ReceiverWorkspaceActions
           lots={lots}
           setLots={setLots}
           loading={loading}
