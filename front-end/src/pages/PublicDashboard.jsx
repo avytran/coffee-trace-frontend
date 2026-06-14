@@ -1,67 +1,18 @@
-/**
- * PublicDashboard – Bảng Điều Khiển Công Khai
- *
- * State architecture designed to accept live data from the API layer (Người 4).
- * All mock data lives in DEFAULT_* constants – swap them out by calling
- * the setters exposed via the useDashboardData() hook pattern.
- */
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AreaChart, Area,
-  BarChart, Bar,
-  PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
+import axiosInstance from '../utils/axiosInstance';
 
-/* ─────────────────────────────────────────────
-   MOCK / DEFAULT DATA
-   Replace by injecting real API responses via
-   setDashboardData() or the future useApi hook.
-───────────────────────────────────────────── */
-const DEFAULT_KPI = [
-  { id: 'production', label: 'Tổng Sản Lượng (Tấn)', value: '12,450', delta: '+15.3%', up: true, icon: 'fa-weight-scale', iconBg: 'bg-forest-100', iconColor: 'text-forest-600' },
-  { id: 'batches', label: 'Lô Hàng Đang Xử Lý', value: '842', delta: '+5.2%', up: true, icon: 'fa-boxes-stacked', iconBg: 'bg-coffee-100', iconColor: 'text-coffee-600' },
-  { id: 'farmers', label: 'Nông Hộ Tham Gia', value: '2,150', delta: '+120', up: true, icon: 'fa-users', iconBg: 'bg-forest-900', iconColor: 'text-white' },
-  { id: 'txValue', label: 'Giá Trị Giao Dịch (ETH)', value: '458.2', delta: '-2.4%', up: false, icon: 'fa-ethereum fa-brands', iconBg: 'bg-coffee-400', iconColor: 'text-white' },
-];
+const DEFAULT_KPI = [];
+const DEFAULT_PRODUCTION = [];
+const DEFAULT_SEGMENT = [];
+const DEFAULT_BATCHES = [];
+const DEFAULT_ACTIVITIES = [];
 
-const MONTHS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
-
-const DEFAULT_PRODUCTION = MONTHS.map((m, i) => ({
-  month: m,
-  Robusta: [1200, 1350, 1100, 1500, 1800, 2100, 2400, 2200, 1900, 1600, 1400, 1300][i],
-  Arabica: [400, 450, 420, 480, 550, 600, 650, 620, 580, 500, 460, 430][i],
-}));
-
-/** Tỷ lệ phân bổ phân đoạn */
-const DEFAULT_SEGMENT = [
-  { name: 'Robusta', value: 68, color: '#357F63' },
-  { name: 'Arabica', value: 22, color: '#DDB892' },
-  { name: 'Blend', value: 7, color: '#6CB297' },
-  { name: 'Khác', value: 3, color: '#9BCCB7' },
-];
-
-const DEFAULT_BATCHES = [
-  { id: '#LOT-8492', type: 'Robusta Sơ Chế Ướt', weight: '2.5 Tấn', stage: 'Đang Vận Chuyển', status: 'processing' },
-  { id: '#LOT-8491', type: 'Arabica Cầu Đất', weight: '1.2 Tấn', stage: 'Lưu Kho', status: 'done' },
-  { id: '#LOT-8490', type: 'Robusta Honey', weight: '3.8 Tấn', stage: 'Kiểm Định Chất Lượng', status: 'processing' },
-  { id: '#LOT-8489', type: 'Robusta Natural', weight: '5.0 Tấn', stage: 'Rang Xay', status: 'done' },
-  { id: '#LOT-8488', type: 'Arabica Đặc Sản', weight: '0.5 Tấn', stage: 'Đóng Gói', status: 'pending' },
-];
-
-const DEFAULT_ACTIVITIES = [
-  { icon: 'fa-circle-check', iconBg: 'bg-forest-600', title: 'Lô hàng #LOT-8492 vừa được xác thực', sub: 'Nông trại: Nguyễn Văn A – Buôn Mê Thuột', time: '5 phút trước' },
-  { icon: 'fa-truck', iconBg: 'bg-coffee-500', title: 'Bắt đầu vận chuyển #LOT-8490', sub: 'Điểm đến: Nhà máy rang xay Trung Nguyên', time: '45 phút trước' },
-  { icon: 'fa-ethereum fa-brands', iconBg: 'bg-forest-900', title: 'Smart Contract được cập nhật', sub: 'TxHash: 0x7f8c...3a9b', time: '2 giờ trước' },
-  { icon: 'fa-user-plus', iconBg: 'bg-coffee-400', title: 'Nông hộ mới đăng ký tham gia', sub: 'Khu vực: Buôn Hồ, Đắk Lắk', time: '5 giờ trước' },
-];
-
-/* ─────────────────────────────────────────────
-   STATUS badge helper
-───────────────────────────────────────────── */
 const STATUS_MAP = {
   processing: { bg: 'bg-coffee-100', text: 'text-coffee-700', dot: 'bg-coffee-500', label: 'Đang xử lý' },
   done: { bg: 'bg-forest-100', text: 'text-forest-700', dot: 'bg-forest-500', label: 'Hoàn thành' },
@@ -78,10 +29,7 @@ function StatusBadge({ status }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   Custom Pie label
-───────────────────────────────────────────── */
-function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
+function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }) {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -93,28 +41,24 @@ function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name })
   ) : null;
 }
 
-/* ─────────────────────────────────────────────
-   FADE ANIMATION
-───────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] },
 });
 
-/* ─────────────────────────────────────────────
-   PAGE COMPONENT
-───────────────────────────────────────────── */
 export default function PublicDashboard() {
-  /* ── Dynamic state – ready to be populated by API (Người 4) ── */
   const [kpi, setKpi] = useState(DEFAULT_KPI);
   const [production, setProduction] = useState(DEFAULT_PRODUCTION);
   const [segment, setSegment] = useState(DEFAULT_SEGMENT);
   const [batches, setBatches] = useState(DEFAULT_BATCHES);
   const [activities, setActivities] = useState(DEFAULT_ACTIVITIES);
-  const [loading, setLoading] = useState(false);
-  const [period, setPeriod] = useState('today'); // 'today' | 'week' | 'month'
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [period, setPeriod] = useState('today');
+
+  // Hàm gom cụm gán dữ liệu bất biến
   const setDashboardData = useCallback((data) => {
     if (data.kpi) setKpi(data.kpi);
     if (data.production) setProduction(data.production);
@@ -123,33 +67,56 @@ export default function PublicDashboard() {
     if (data.activities) setActivities(data.activities);
   }, []);
 
-  /* ── Simulate API refetch on period change ── */
   useEffect(() => {
-    // TODO: Replace this stub with real API call, e.g.:
-    // fetchDashboardData(period).then(setDashboardData)
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, [period]);
+    let isMounted = true;
+
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Gọi API Public không cần Token bảo mật chuyên sâu
+        const response = await axiosInstance.get(`/public/dashboard`, {
+          params: { period }
+        });
+
+        if (isMounted && response.data) {
+          setDashboardData(response.data);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy dữ liệu Dashboard:", err);
+        if (isMounted) {
+          setError("Không thể tải dữ liệu thời gian thực. Vui lòng kiểm tra lại đường truyền.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Cleanup tránh memory leak khi người dùng bấm chuyển tab quá nhanh
+    return () => {
+      isMounted = false;
+    };
+  }, [period, setDashboardData]);
 
   return (
     <div className="pt-4 pb-16">
-      {/* Grain texture overlay */}
       <div className="fixed inset-0 pointer-events-none z-[-1] opacity-30"
         style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E\")", mixBlendMode: 'multiply' }}
       />
 
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
-        {/* ── Page header & period filters ── */}
+        {/* Tiêu đề & Bộ lọc thời gian */}
         <motion.div {...fadeUp(0)} className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="font-serif text-3xl font-bold text-forest-900 mb-2">Tổng Quan Chuỗi Cung Ứng</h1>
+            <h1 className=" text-3xl font-bold text-forest-900 mb-2">Tổng Quan Chuỗi Cung Ứng</h1>
             <p className="text-forest-700 text-sm">Dữ liệu thời gian thực từ mạng lưới ROBUSTRACE</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="glass-panel flex items-center p-1 rounded-xl">
+            <div className="glass-panel flex items-center p-1 rounded-xl bg-white/60 backdrop-blur-xs">
               {[
                 { key: 'today', label: 'Hôm nay' },
                 { key: 'week', label: 'Tuần này' },
@@ -157,23 +124,28 @@ export default function PublicDashboard() {
               ].map(({ key, label }) => (
                 <button
                   key={key}
+                  disabled={loading}
                   onClick={() => setPeriod(key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${period === key
-                    ? 'bg-white text-forest-900 shadow-sm'
-                    : 'text-forest-700 hover:text-forest-900'
+                    ? 'bg-white text-forest-900 shadow-xs font-semibold'
+                    : 'text-forest-700 hover:text-forest-900 disabled:opacity-50'
                     }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <button className="px-4 py-2 rounded-xl border border-coffee-300 bg-white text-forest-800 font-medium hover:border-forest-500 transition-all text-sm flex items-center gap-2">
-              <i className="fa-solid fa-filter" /> Lọc Nâng Cao
-            </button>
           </div>
         </motion.div>
 
-        {/* ── KPI Cards ── */}
+        {/* Hiển thị thông báo lỗi nếu API gặp sự cố */}
+        {error && (
+          <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+            <i className="fa-solid fa-triangle-exclamation"></i> {error}
+          </div>
+        )}
+
+        {/* Thẻ KPI thông số */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           initial="initial"
@@ -181,13 +153,13 @@ export default function PublicDashboard() {
           variants={{ animate: { transition: { staggerChildren: 0.08 } } }}
         >
           {kpi.map((card, i) => (
-            <motion.div key={card.id} {...fadeUp(0.05 * i)} className="dashboard-card p-6">
+            <motion.div key={card.id || i} {...fadeUp(0.05 * i)} className="dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-sm text-forest-600 font-medium mb-1">{card.label}</p>
-                  <h3 className="text-3xl font-bold text-forest-900 font-serif">{card.value}</h3>
+                  <h3 className="text-3xl font-bold text-forest-900 ">{card.value}</h3>
                 </div>
-                <div className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center ${card.iconColor}`}>
+                <div className={`w-10 h-10 rounded-lg ${card.iconBg || 'bg-gray-100'} flex items-center justify-center ${card.iconColor || 'text-gray-600'}`}>
                   <i className={`fa-solid ${card.icon}`} />
                 </div>
               </div>
@@ -196,34 +168,23 @@ export default function PublicDashboard() {
                   <i className={`fa-solid ${card.up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'} text-xs`} />
                   {card.delta}
                 </span>
-                <span className="text-forest-400">so với tháng trước</span>
+                <span className="text-forest-400">so với kì trước</span>
               </div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* ── Charts Row ── */}
+        {/* Khối Đồ thị phân tích */}
         {loading ? (
-          <LoadingSpinner variant="card" message="Đang tải biểu đồ..." />
+          <LoadingSpinner variant="card" message="Đang đồng bộ dữ liệu mạng lưới..." />
         ) : (
           <motion.div {...fadeUp(0.1)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-            {/* Production Area Chart (lg:col-span-2) */}
-            <div className="lg:col-span-2 dashboard-card p-6">
+            {/* Đồ thị miền sản lượng */}
+            <div className="lg:col-span-2 dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-forest-900 text-lg">Biểu Đồ Sản Lượng & Giao Dịch</h3>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-forest-600" />
-                    <span className="text-forest-700">Robusta</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-coffee-400" />
-                    <span className="text-forest-700">Arabica</span>
-                  </div>
-                </div>
               </div>
-
               <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={production} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
                   <defs>
@@ -239,55 +200,33 @@ export default function PublicDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(228,190,160,0.2)" />
                   <XAxis dataKey="month" tick={{ fill: '#7F5539', fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: '#7F5539', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: 'rgba(255,255,255,0.95)', border: '1px solid #EED5C1', borderRadius: 12, fontSize: 13 }}
-                    labelStyle={{ color: '#1B4332', fontWeight: 600 }}
-                  />
-                  <Area type="monotone" dataKey="Robusta" stroke="#357F63" strokeWidth={2.5} fill="url(#gradRobusta)" dot={false} activeDot={{ r: 5, fill: '#357F63' }} />
-                  <Area type="monotone" dataKey="Arabica" stroke="#DDB892" strokeWidth={2.5} fill="url(#gradArabica)" dot={false} activeDot={{ r: 5, fill: '#DDB892' }} />
+                  <Tooltip contentStyle={{ background: 'rgba(255,255,255,0.95)', border: '1px solid #EED5C1', borderRadius: 12, fontSize: 13 }} />
+                  <Area type="monotone" dataKey="Robusta" stroke="#357F63" strokeWidth={2.5} fill="url(#gradRobusta)" dot={false} />
+                  <Area type="monotone" dataKey="Arabica" stroke="#DDB892" strokeWidth={2.5} fill="url(#gradArabica)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Segment Pie Chart */}
-            <div className="dashboard-card p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-forest-900 text-lg">Phân Bổ Phân Đoạn</h3>
-                <button className="text-forest-500 hover:text-forest-700 text-sm">
-                  <i className="fa-solid fa-expand" />
-                </button>
-              </div>
-
+            {/* Đồ thị hình bánh tỉ lệ */}
+            <div className="dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
+              <h3 className="font-bold text-forest-900 text-lg mb-6">Phân Bổ Phân Đoạn</h3>
               <div className="flex-grow flex flex-col items-center justify-center">
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
-                    <Pie
-                      data={segment}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={90}
-                      innerRadius={52}
-                      dataKey="value"
-                      labelLine={false}
-                      label={PieLabel}
-                    >
-                      {segment.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
+                    <Pie data={segment} cx="50%" cy="50%" outerRadius={90} innerRadius={52} dataKey="value" labelLine={false} label={PieLabel}>
+                      {segment.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip formatter={(v) => `${v}%`} contentStyle={{ borderRadius: 10, fontSize: 13 }} />
+                    <Tooltip formatter={(v) => `${v}%`} />
                   </PieChart>
                 </ResponsiveContainer>
-
-                {/* Legend */}
                 <div className="w-full mt-4 space-y-2">
-                  {segment.map(({ name, value, color }) => (
-                    <div key={name} className="flex items-center justify-between text-sm">
+                  {segment.map((seg, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        <span className="text-forest-700">{name}</span>
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: seg.color }} />
+                        <span className="text-forest-700">{seg.name}</span>
                       </div>
-                      <span className="font-semibold text-forest-900">{value}%</span>
+                      <span className="font-semibold text-forest-900">{seg.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -296,61 +235,51 @@ export default function PublicDashboard() {
           </motion.div>
         )}
 
-        {/* ── Activity + Table Row ── */}
+        {/* Khối Nhật ký hoạt động & Bảng dữ liệu lô hàng */}
         <motion.div {...fadeUp(0.15)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Activity feed */}
-          <div className="dashboard-card p-6 flex flex-col">
+          {/* Feed Nhật ký hoạt động công khai */}
+          <div className="dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
             <h3 className="font-bold text-forest-900 text-lg mb-6">Hoạt Động Gần Đây</h3>
             <div className="space-y-6 flex-grow">
-              {activities.map(({ icon, iconBg, title, sub, time }, idx) => (
+              {activities.map((act, idx) => (
                 <div key={idx} className="flex gap-4">
                   <div className="relative flex-shrink-0">
-                    <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center text-white z-10 relative`}>
-                      <i className={`fa-solid ${icon} text-sm`} />
+                    <div className={`w-10 h-10 rounded-full ${act.iconBg} flex items-center justify-center text-white z-10 relative`}>
+                      <i className={`fa-solid ${act.icon} text-sm`} />
                     </div>
-                    {idx < activities.length - 1 && (
-                      <div className="absolute top-10 bottom-[-24px] left-1/2 w-px bg-coffee-200 -translate-x-1/2" />
-                    )}
+                    {idx < activities.length - 1 && <div className="absolute top-10 bottom-[-24px] left-1/2 w-px bg-coffee-200 -translate-x-1/2" />}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-forest-900">{title}</p>
-                    <p className="text-xs text-forest-500 mt-1">{sub}</p>
-                    <p className="text-xs text-forest-400 mt-1">{time}</p>
+                    <p className="text-sm font-medium text-forest-900">{act.title}</p>
+                    <p className="text-xs text-forest-500 mt-1">{act.sub}</p>
+                    <p className="text-xs text-forest-400 mt-1">{act.time}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <button className="w-full mt-6 py-3 rounded-xl border border-coffee-200 text-forest-700 text-sm font-medium hover:bg-coffee-50 transition-colors">
-              Xem Tất Cả
-            </button>
           </div>
 
-          {/* Batches table (lg:col-span-2) */}
-          <div className="dashboard-card p-0 lg:col-span-2 overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-coffee-100 flex items-center justify-between">
+          {/* Bảng danh sách lô hàng thực tế */}
+          <div className="dashboard-card p-0 lg:col-span-2 overflow-hidden bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
+            <div className="p-6 border-b border-coffee-100">
               <h3 className="font-bold text-forest-900 text-lg">Lô Hàng Đang Di Chuyển</h3>
-              <button className="text-forest-600 hover:text-forest-900 text-sm font-medium">
-                Chi tiết <i className="fa-solid fa-arrow-right ml-1" />
-              </button>
             </div>
             <div className="overflow-x-auto flex-grow">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-forest-50 text-forest-600 text-xs uppercase tracking-wider">
-                    {['Mã Lô', 'Loại', 'Khối Lượng', 'Giai Đoạn', 'Trạng Thái'].map(h => (
-                      <th key={h} className="px-6 py-4 font-medium">{h}</th>
-                    ))}
+                  <tr className="bg-forest-55/40 text-forest-600 text-xs uppercase tracking-wider">
+                    {['Mã Lô', 'Loại', 'Khối Lượng', 'Giai Đoạn', 'Trạng Thái'].map(h => <th key={h} className="px-6 py-4 font-semibold">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-coffee-100">
-                  {batches.map(({ id, type, weight, stage, status }) => (
-                    <tr key={id} className="hover:bg-coffee-50/50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-forest-900">{id}</td>
-                      <td className="px-6 py-4 text-forest-700">{type}</td>
-                      <td className="px-6 py-4 text-forest-700">{weight}</td>
-                      <td className="px-6 py-4 text-forest-700">{stage}</td>
-                      <td className="px-6 py-4"><StatusBadge status={status} /></td>
+                  {batches.map((batch, index) => (
+                    <tr key={batch.id || index} className="hover:bg-coffee-50/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-forest-900">{batch.id}</td>
+                      <td className="px-6 py-4 text-forest-700">{batch.type}</td>
+                      <td className="px-6 py-4 text-forest-700">{batch.weight}</td>
+                      <td className="px-6 py-4 text-forest-700">{batch.stage}</td>
+                      <td className="px-6 py-4"><StatusBadge status={batch.status} /></td>
                     </tr>
                   ))}
                 </tbody>

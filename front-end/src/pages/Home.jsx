@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // 👈 Thêm useNavigate ở đây
 import {
   motion,
   useInView,
@@ -13,9 +13,9 @@ import {
    We subscribe to the MotionValue and store it in local state.
 ───────────────────────────────────────────── */
 function AnimatedCounter({ target, suffix = '', duration = 2 }) {
-  const ref      = useRef(null);
-  const isIn     = useInView(ref, { once: true, margin: '-80px' });
-  const count    = useMotionValue(0);
+  const ref = useRef(null);
+  const isIn = useInView(ref, { once: true, margin: '-80px' });
+  const count = useMotionValue(0);
   const [display, setDisplay] = useState('0');
 
   // Subscribe MotionValue → local state for safe rendering
@@ -46,7 +46,7 @@ function AnimatedCounter({ target, suffix = '', duration = 2 }) {
    Fade-up variant for scroll sections
 ───────────────────────────────────────────── */
 const fadeUp = {
-  hidden:  { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
 };
 
@@ -55,7 +55,7 @@ const staggerChildren = {
 };
 
 function ScrollReveal({ children, className = '', delay = 0, once = true }) {
-  const ref  = useRef(null);
+  const ref = useRef(null);
   const isIn = useInView(ref, { once, margin: '-60px' });
   return (
     <motion.div
@@ -75,10 +75,10 @@ function ScrollReveal({ children, className = '', delay = 0, once = true }) {
    STAT cards data
 ───────────────────────────────────────────── */
 const STATS = [
-  { icon: 'fa-tractor',       bg: 'bg-forest-100',  color: 'text-forest-600',  target: 2450,   suffix: '+', label: 'Nông dân tham gia' },
-  { icon: 'fa-boxes-stacked', bg: 'bg-coffee-200',  color: 'text-forest-800',  target: 18400,  suffix: '+', label: 'Lô hàng xác thực' },
-  { icon: 'fa-ethereum fa-brands', bg: 'bg-forest-900', color: 'text-white',   target: 156000, suffix: '+', label: 'Giao dịch Blockchain' },
-  { icon: 'fa-handshake-angle',    bg: 'bg-coffee-400', color: 'text-white',   target: 85,     suffix: '+', label: 'Đối tác thương mại' },
+  { icon: 'fa-tractor', bg: 'bg-forest-100', color: 'text-forest-600', target: 2450, suffix: '+', label: 'Nông dân tham gia' },
+  { icon: 'fa-boxes-stacked', bg: 'bg-coffee-200', color: 'text-forest-800', target: 18400, suffix: '+', label: 'Lô hàng xác thực' },
+  { icon: 'fa-ethereum fa-brands', bg: 'bg-forest-900', color: 'text-white', target: 156000, suffix: '+', label: 'Giao dịch Blockchain' },
+  { icon: 'fa-handshake-angle', bg: 'bg-coffee-400', color: 'text-white', target: 85, suffix: '+', label: 'Đối tác thương mại' },
 ];
 
 /* ─────────────────────────────────────────────
@@ -111,16 +111,28 @@ const JOURNEY = [
    FEATURED BATCHES
 ───────────────────────────────────────────── */
 const BATCHES = [
-  { name: 'Robusta Cư M\'gar',  meta: 'Độ ẩm 12.5%, Sàng 18, Washed',       score: '95đ', img: 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=500&q=80' },
-  { name: 'Arabica Cầu Đất',    meta: 'Độ cao 1500m, Honey',                  score: '92đ', img: 'https://images.unsplash.com/photo-1620054703953-b9cc9c62c3f8?w=500&q=80' },
-  { name: 'Robusta Đắk Mil',    meta: 'Organic Certified, Natural',            score: '94đ', img: 'https://images.unsplash.com/photo-1581404179374-1e0db028cb93?w=500&q=80' },
-  { name: 'Blend Đặc Biệt',     meta: '70% Robusta, 30% Arabica, Medium Roast', score: '96đ', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80' },
+  { name: 'Robusta Cư M\'gar', meta: 'Độ ẩm 12.5%, Sàng 18, Washed', score: '95đ', img: 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=500&q=80' },
+  { name: 'Arabica Cầu Đất', meta: 'Độ cao 1500m, Honey', score: '92đ', img: 'https://images.unsplash.com/photo-1620054703953-b9cc9c62c3f8?w=500&q=80' },
+  { name: 'Robusta Đắk Mil', meta: 'Organic Certified, Natural', score: '94đ', img: 'https://images.unsplash.com/photo-1581404179374-1e0db028cb93?w=500&q=80' },
+  { name: 'Blend Đặc Biệt', meta: '70% Robusta, 30% Arabica, Medium Roast', score: '96đ', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80' },
 ];
 
 /* ─────────────────────────────────────────────
    PAGE COMPONENT
 ───────────────────────────────────────────── */
 export default function Home() {
+  const navigate = useNavigate(); // 👈 Khởi tạo hook điều hướng
+  const [searchId, setSearchId] = useState(''); // 👈 Khởi tạo state quản lý mã nhập
+
+  // Hàm xử lý khi người dùng nhấn nút Tra Cứu hoặc Enter
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!searchId.trim()) return;
+
+    // Điều hướng sang trang /trace kèm theo query parameter 'id'
+    navigate(`/trace?id=${encodeURIComponent(searchId.trim())}`);
+  };
+
   return (
     <>
       {/* ── HERO ── */}
@@ -148,26 +160,16 @@ export default function Home() {
             </h1>
 
             <p className="text-gray-700 text-sm md:text-base mb-10 max-w-md leading-relaxed">
-              Nền tảng DApp ROBUSTRACE giúp theo dõi toàn bộ vòng đời của hạt cà phê qua công nghệ Blockchain, đảm bảo chất lượng, tính bền vững từ vườn trồng đến ly cà phê của bạn.
+              Nền tảng DApp ROBUSTRACE giúp theo dõi toàn bộ vòng đời của hạt cà phê qua công nghệ Blockchain, đảm bảo chất lượng, tính bền vũn từ vườn trồng đến ly cà phê của bạn.
             </p>
 
             {/* Search bar */}
-            <div className="w-full max-w-[450px] bg-white rounded-full p-1.5 flex items-center shadow-lg shadow-black/5 mb-8 border border-gray-100">
-              <div className="pl-4 pr-2 text-brand-darkgreen opacity-70">
-                <i className="fa-solid fa-qrcode text-lg" />
-              </div>
-              <input
-                type="text"
-                placeholder="Nhập Batch ID, mã QR..."
-                className="flex-1 bg-transparent border-none outline-none text-gray-700 text-sm px-2 font-medium placeholder-gray-400"
-              />
-              <button className="bg-brand-darkgreen hover:bg-forest-800 text-white px-8 py-3 rounded-full font-bold text-sm transition-colors shadow-md">
-                Tra Cứu
-              </button>
-            </div>
-
-            <button className="px-8 py-2.5 rounded-full border border-brand-darkgreen text-brand-darkgreen hover:bg-brand-darkgreen hover:text-white font-bold text-sm transition-colors">
-              Tìm Hiểu Thêm
+            <button
+              type="submit"
+              className="bg-brand-darkgreen hover:bg-forest-800 text-white px-8 py-3 rounded-full font-bold text-sm transition-colors shadow-md"
+              onClick={() => { navigate("/trace") }}
+            >
+              Tra Cứu
             </button>
           </motion.div>
 
