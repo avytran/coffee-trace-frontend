@@ -70,17 +70,18 @@ export default function Navbar() {
             {authStatus === 'ACTIVE' && (
               <>
                 <div className="w-px h-4 bg-coffee-300 mx-2" />
-
-                <NavLink
-                  to="/workspace"
-                  className={({ isActive }) =>
-                    `px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${isActive ? 'bg-forest-50 text-forest-900' : 'text-forest-700 hover:bg-coffee-100 hover:text-forest-900'
-                    }`
-                  }
-                >
-                  <i className="fa-solid fa-boxes-stacked text-xs" />
-                  Lô Hàng
-                </NavLink>
+                {role && role !== 'ADMIN' && role !== 'ANONYMOUS' && (
+                  <NavLink
+                    to="/workspace"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${isActive ? 'bg-forest-50 text-forest-900' : 'text-forest-700 hover:bg-coffee-100 hover:text-forest-900'
+                      }`
+                    }
+                  >
+                    <i className="fa-solid fa-boxes-stacked text-xs" />
+                    Lô Hàng
+                  </NavLink>
+                )}
 
                 {role === 'ADMIN' && (
                   <NavLink

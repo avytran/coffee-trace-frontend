@@ -53,7 +53,7 @@ export default function ConnectWallet() {
                 
                 {authStatus === 'ACTIVE' && (
                   <Link
-                    to="/workspace"
+                    to={role === "ADMIN" ? "/admin" : "/workspace"}
                     className="rounded-full border border-forest-500 bg-forest-50 px-8 py-3 text-sm font-semibold text-forest-900 hover:bg-forest-100 transition-all shadow-sm"
                   >
                     Vào Không Gian Làm Việc ({role}) →
