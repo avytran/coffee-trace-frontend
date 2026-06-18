@@ -1,0 +1,9 @@
+export const ROLE_INDEX_MAP = {
+  ADMIN: 0,
+  FARMER: 1,
+  COOPERATIVE: 2,
+  PROCESSOR: 3,
+  EXPORTER: 4,
+  RECEIVER: 5,
+  ANONYMOUS: 6
+};

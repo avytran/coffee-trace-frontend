@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BatchList } from "../Common/BatchList";
 import { BatchGridView } from "../Common/BatchGridView";
 import { COLORS } from "../../constants/colors";
 import { WorkspaceHeader } from "../Common/WorkspaceHeader";
+import LoadingSpinner from "../Common/LoadingSpinner";
+import { NotificationModal } from "../Common/NotificationModal";
+import { parseWeb3Error } from "../../utils/errorHandler";
 
 export default function ReceiverWorkspaceActions({ 
     lots, 
@@ -13,17 +16,38 @@ export default function ReceiverWorkspaceActions({
     search, 
     setSearch, 
     handleOpenDetail,
-    onImportDeclare, // Hàm mở modal thông quan hải quan nhập khẩu
+    onImportDeclare, 
 }) {
     const [activeTab, setActiveTab] = useState("pending");
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "success",
+        callback: null
+    });
 
-    // Lọc danh sách lô hàng theo đặc thù luồng của Nhà Nhập Khẩu (Receiver)
+    useEffect(() => {
+        if (error) {
+            const parsedError = parseWeb3Error(error);
+            setModalConfig({
+                isOpen: true,
+                title: parsedError.title || "Lỗi Hệ Thống",
+                message: parsedError.message || String(error),
+                type: "error",
+                callback: null
+            });
+        }
+    }, [error]);
 
-    console.log(lots);
-    
+    const handleCloseModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (modalConfig.callback) {
+            modalConfig.callback();
+        }
+    };
+
     const filtered = lots.filter(l => {
-        // Chờ xử lý = Đang được vận chuyển hoặc Exporter đã bàn giao ký nhận (EXPORTED)
-        // Đã xử lý = Toàn bộ chuỗi cung ứng khép kín hoàn tất (COMPLETED)
         const matchesTab = activeTab === "pending"
             ? l.status === "EXPORTED"
             : l.status === "COMPLETED";
@@ -39,14 +63,14 @@ export default function ReceiverWorkspaceActions({
     const pendingCount = lots.filter(l => l.status === "EXPORTED").length;
 
     return (
-        <div className="space-y-6">
-            {/* Header thông tin vai trò Receiver */}
+        <div className="space-y-6 relative">
+            {loading && <LoadingSpinner loadingStatus="Đang truy vấn dữ liệu nhập khẩu từ mạng lưới..." />}
+
             <WorkspaceHeader
                 role="RECEIVER"
                 desc={"Tiếp nhận vận đơn quốc tế, kiểm tra đối chiếu mã chuỗi, thực hiện thông quan bến cảng đích và xác nhận nhập kho thành phẩm."}
             />
 
-            {/* Hệ thống Tabs trạng thái */}
             <div className="flex border-b border-coffee-200 gap-6">
                 <button
                     onClick={() => setActiveTab("pending")}
@@ -78,7 +102,6 @@ export default function ReceiverWorkspaceActions({
                 </button>
             </div>
 
-            {/* Bộ lọc tìm kiếm */}
             <div className="flex flex-col sm:flex-row sm:items-stretch gap-3">
                 <input
                     value={search}
@@ -106,18 +129,12 @@ export default function ReceiverWorkspaceActions({
                 </div>
             </div>
 
-            {/* Khối danh sách hiển thị */}
             {loading ? (
                 <div className="text-center py-12 text-sm" style={{ color: COLORS.coffee600 }}>
                     Đang quét dữ liệu tờ khai nhập khẩu và luồng vận đơn on-chain...
                 </div>
-            ) : error ? (
-                <div className="p-4 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
-                    <strong>Lỗi hệ thống tiếp nhận:</strong> {error}
-                </div>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl bg-white border border-dashed flex flex-col items-center justify-center p-6" style={{ borderColor: COLORS.coffee200 }}>
-                    <span className="text-3xl mb-2">{activeTab === "pending" ? "⚓" : "🏢"}</span>
                     <p className="text-sm font-medium" style={{ color: COLORS.coffee600 }}>
                         {activeTab === "pending"
                             ? "Hiện không có kiện container nào đang neo đậu chờ thông quan."
@@ -139,6 +156,14 @@ export default function ReceiverWorkspaceActions({
                     onActionOne={onImportDeclare}
                 />
             )}
+
+            <NotificationModal
+                isOpen={modalConfig.isOpen}
+                onClose={handleCloseModal}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+            />
         </div>
     );
 }

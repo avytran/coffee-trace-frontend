@@ -37,7 +37,7 @@ export function Web3AuthProvider({ children }) {
         setAuthStatus('ACTIVE');
         return true; // Khôi phục thành công
       } catch (err) {
-        console.warn('⚠️ Token hết hạn hoặc không hợp lệ, yêu cầu ký lại:', err);
+        console.warn('Token hết hạn hoặc không hợp lệ, yêu cầu ký lại:', err);
         logout();
       }
     }

@@ -5,6 +5,8 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
+import { NotificationModal } from '../components/Common/NotificationModal';
+import { parseWeb3Error } from '../utils/errorHandler';
 import axiosInstance from '../utils/axiosInstance';
 
 const DEFAULT_KPI = [];
@@ -58,7 +60,13 @@ export default function PublicDashboard() {
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('today');
 
-  // Hàm gom cụm gán dữ liệu bất biến
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "success"
+  });
+
   const setDashboardData = useCallback((data) => {
     if (data.kpi) setKpi(data.kpi);
     if (data.production) setProduction(data.production);
@@ -74,7 +82,6 @@ export default function PublicDashboard() {
       setLoading(true);
       setError(null);
       try {
-        // Gọi API Public không cần Token bảo mật chuyên sâu
         const response = await axiosInstance.get(`/public/dashboard`, {
           params: { period }
         });
@@ -85,7 +92,14 @@ export default function PublicDashboard() {
       } catch (err) {
         console.error("Lỗi lấy dữ liệu Dashboard:", err);
         if (isMounted) {
+          const parsedError = parseWeb3Error(err);
           setError("Không thể tải dữ liệu thời gian thực. Vui lòng kiểm tra lại đường truyền.");
+          setModalConfig({
+            isOpen: true,
+            title: parsedError.title || "Lỗi Tải Dữ Liệu",
+            message: parsedError.message || "Không thể đồng bộ dữ liệu mạng lưới.",
+            type: "error"
+          });
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -94,21 +108,23 @@ export default function PublicDashboard() {
 
     fetchDashboardData();
 
-    // Cleanup tránh memory leak khi người dùng bấm chuyển tab quá nhanh
     return () => {
       isMounted = false;
     };
   }, [period, setDashboardData]);
 
+  const handleCloseModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
+
   return (
-    <div className="pt-4 pb-16">
+    <div className="pt-4 pb-16 relative">
       <div className="fixed inset-0 pointer-events-none z-[-1] opacity-30"
         style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E\")", mixBlendMode: 'multiply' }}
       />
 
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
-        {/* Tiêu đề & Bộ lọc thời gian */}
         <motion.div {...fadeUp(0)} className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
             <h1 className=" text-3xl font-bold text-forest-900 mb-2">Tổng Quan Chuỗi Cung Ứng</h1>
@@ -138,14 +154,12 @@ export default function PublicDashboard() {
           </div>
         </motion.div>
 
-        {/* Hiển thị thông báo lỗi nếu API gặp sự cố */}
         {error && (
           <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
             <i className="fa-solid fa-triangle-exclamation"></i> {error}
           </div>
         )}
 
-        {/* Thẻ KPI thông số */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           initial="initial"
@@ -174,13 +188,11 @@ export default function PublicDashboard() {
           ))}
         </motion.div>
 
-        {/* Khối Đồ thị phân tích */}
         {loading ? (
-          <LoadingSpinner variant="card" message="Đang đồng bộ dữ liệu mạng lưới..." />
+          <LoadingSpinner variant="card" loadingStatus="Đang đồng bộ dữ liệu mạng lưới..." />
         ) : (
           <motion.div {...fadeUp(0.1)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-            {/* Đồ thị miền sản lượng */}
             <div className="lg:col-span-2 dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-forest-900 text-lg">Biểu Đồ Sản Lượng & Giao Dịch</h3>
@@ -207,7 +219,6 @@ export default function PublicDashboard() {
               </ResponsiveContainer>
             </div>
 
-            {/* Đồ thị hình bánh tỉ lệ */}
             <div className="dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
               <h3 className="font-bold text-forest-900 text-lg mb-6">Phân Bổ Phân Đoạn</h3>
               <div className="flex-grow flex flex-col items-center justify-center">
@@ -235,10 +246,8 @@ export default function PublicDashboard() {
           </motion.div>
         )}
 
-        {/* Khối Nhật ký hoạt động & Bảng dữ liệu lô hàng */}
         <motion.div {...fadeUp(0.15)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Feed Nhật ký hoạt động công khai */}
           <div className="dashboard-card p-6 bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
             <h3 className="font-bold text-forest-900 text-lg mb-6">Hoạt Động Gần Đây</h3>
             <div className="space-y-6 flex-grow">
@@ -260,7 +269,6 @@ export default function PublicDashboard() {
             </div>
           </div>
 
-          {/* Bảng danh sách lô hàng thực tế */}
           <div className="dashboard-card p-0 lg:col-span-2 overflow-hidden bg-white rounded-xl shadow-xs border border-coffee-100 flex flex-col">
             <div className="p-6 border-b border-coffee-100">
               <h3 className="font-bold text-forest-900 text-lg">Lô Hàng Đang Di Chuyển</h3>
@@ -289,6 +297,14 @@ export default function PublicDashboard() {
         </motion.div>
 
       </div>
+
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        onClose={handleCloseModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

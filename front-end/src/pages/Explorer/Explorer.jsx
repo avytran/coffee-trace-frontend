@@ -142,7 +142,7 @@ const Explorer = () => {
                             </div>
                             {error && (
                                 <p className="text-red-500 font-semibold text-xs mt-2.5 animate-headShake">
-                                    ⚠️ {error}
+                                    {error}
                                 </p>
                             )}
                         </div>

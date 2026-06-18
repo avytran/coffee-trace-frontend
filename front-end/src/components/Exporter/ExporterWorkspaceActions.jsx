@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BatchList } from "../Common/BatchList";
 import { BatchGridView } from "../Common/BatchGridView";
 import { COLORS } from "../../constants/colors";
 import { WorkspaceHeader } from "../Common/WorkspaceHeader";
+import LoadingSpinner from "../Common/LoadingSpinner";
+import { NotificationModal } from "../Common/NotificationModal";
+import { parseWeb3Error } from "../../utils/errorHandler";
 
 export default function ExporterWorkspaceActions({ 
     lots, 
@@ -13,14 +16,39 @@ export default function ExporterWorkspaceActions({
     search, 
     setSearch, 
     handleOpenDetail,
-    onDeclareExport,   // Hàm kích hoạt Form khai báo tờ khai hải quan & vận đơn tàu
-    onCompleteBatch    // Hàm hoàn thành chuỗi cung ứng (Đóng Batch sang COMPLETED)
+    onDeclareExport,   
+    onCompleteBatch    
 }) {
     const [activeTab, setActiveTab] = useState("pending");
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "success",
+        callback: null
+    });
 
-    // Lọc danh sách lô hàng theo đặc thù luồng của Nhà xuất khẩu
+    useEffect(() => {
+        if (error) {
+            const parsedError = parseWeb3Error(error);
+            setModalConfig({
+                isOpen: true,
+                title: parsedError.title || "Lỗi Hệ Thống",
+                message: parsedError.message || String(error),
+                type: "error",
+                callback: null
+            });
+        }
+    }, [error]);
+
+    const handleCloseModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (modalConfig.callback) {
+            modalConfig.callback();
+        }
+    };
+
     const filtered = lots.filter(l => {
-        // Chờ xử lý = Đang ở trạng thái EXPORTED (Nhà chế biến vừa bàn giao)
         const matchesTab = activeTab === "pending"
             ? l.status === "ASSESSED" 
             : ["EXPORTED", "COMPLETED"].includes(l.status); 
@@ -36,15 +64,14 @@ export default function ExporterWorkspaceActions({
     const pendingCount = lots.filter(l => l.status === "ASSESSED").length;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            {loading && <LoadingSpinner loadingStatus="Đang truy vấn dữ liệu từ chuỗi khối..." />}
 
-            {/* Header với Desc ngắn gọn chuẩn hóa vai trò Exporter */}
             <WorkspaceHeader
                 role="EXPORTER"
                 desc={"Tiếp nhận lô hàng thương mại, khai báo thông số vận đơn xuất khẩu và đóng gói hồ sơ hải quan lên chuỗi khối."}
             />
 
-            {/* Hệ thống Tabs trạng thái */}
             <div className="flex border-b border-coffee-200 gap-6">
                 <button
                     onClick={() => setActiveTab("pending")}
@@ -76,7 +103,6 @@ export default function ExporterWorkspaceActions({
                 </button>
             </div>
 
-            {/* Bộ lọc tìm kiếm nâng cao */}
             <div className="flex flex-col sm:flex-row sm:items-stretch gap-3">
                 <input
                     value={search}
@@ -104,18 +130,12 @@ export default function ExporterWorkspaceActions({
                 </div>
             </div>
 
-            {/* Luồng render giao diện danh sách */}
             {loading ? (
                 <div className="text-center py-12 text-sm" style={{ color: COLORS.coffee600 }}>
                     Đang truy vấn tờ khai và vận đơn xuất khẩu từ hệ thống mạng lưới...
                 </div>
-            ) : error ? (
-                <div className="p-4 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
-                    <strong>Lỗi Hải Quan / Cảng bến:</strong> {error}
-                </div>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl bg-white border border-dashed flex flex-col items-center justify-center p-6" style={{ borderColor: COLORS.coffee200 }}>
-                    <span className="text-3xl mb-2">{activeTab === "pending" ? "🚢" : "🌍"}</span>
                     <p className="text-sm font-medium" style={{ color: COLORS.coffee600 }}>
                         {activeTab === "pending"
                             ? "Kho vận trống! Không có kiện hàng nào đang chờ khai báo thông quan."
@@ -139,6 +159,14 @@ export default function ExporterWorkspaceActions({
                     onActionTwo={onCompleteBatch}
                 />
             )}
+
+            <NotificationModal
+                isOpen={modalConfig.isOpen}
+                onClose={handleCloseModal}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+            />
         </div>
     );
 }

@@ -1,11 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BatchList } from "../Common/BatchList";
 import { BatchGridView } from "../Common/BatchGridView";
 import { COLORS } from "../../constants/colors";
 import { WorkspaceHeader } from "../Common/WorkspaceHeader";
+import LoadingSpinner from "../Common/LoadingSpinner";
+import { NotificationModal } from "../Common/NotificationModal";
+import { parseWeb3Error } from "../../utils/errorHandler";
 
 export default function ProcessorWorkspaceActions({ lots, loading, error, view, setView, search, setSearch, handleOpenDetail }) {
     const [activeTab, setActiveTab] = useState("pending");
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "success",
+        callback: null
+    });
+
+    useEffect(() => {
+        if (error) {
+            const parsedError = parseWeb3Error(error);
+            setModalConfig({
+                isOpen: true,
+                title: parsedError.title || "Lỗi Hệ Thống",
+                message: parsedError.message || String(error),
+                type: "error",
+                callback: null
+            });
+        }
+    }, [error]);
+
+    const handleCloseModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (modalConfig.callback) {
+            modalConfig.callback();
+        }
+    };
 
     const filtered = lots.filter(l => {
         const matchesTab = activeTab === "pending"
@@ -23,7 +53,8 @@ export default function ProcessorWorkspaceActions({ lots, loading, error, view, 
     const pendingCount = lots.filter(l => l.status === "PRE_PROCESSED").length;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            {loading && <LoadingSpinner loadingStatus="Đang truy vấn dữ liệu chế biến từ mạng lưới..." />}
 
             <WorkspaceHeader
                 role="PROCESSOR"
@@ -90,13 +121,8 @@ export default function ProcessorWorkspaceActions({ lots, loading, error, view, 
                 <div className="text-center py-12 text-sm" style={{ color: COLORS.coffee600 }}>
                     Đang truy vấn danh sách dữ liệu từ chuỗi cung ứng...
                 </div>
-            ) : error ? (
-                <div className="p-4 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
-                    <strong>Lỗi hệ thống:</strong> {error}
-                </div>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl bg-white border border-dashed flex flex-col items-center justify-center p-6" style={{ borderColor: COLORS.coffee200 }}>
-                    <span className="text-3xl mb-2">{activeTab === "pending" ? "🎉" : "📭"}</span>
                     <p className="text-sm font-medium" style={{ color: COLORS.coffee600 }}>
                         {activeTab === "pending"
                             ? "Tuyệt vời! Hiện tại không có lô hàng nào đang chờ chế biến."
@@ -108,6 +134,14 @@ export default function ProcessorWorkspaceActions({ lots, loading, error, view, 
             ) : (
                 <BatchGridView batches={filtered} handleOpenDetail={handleOpenDetail} />
             )}
+
+            <NotificationModal
+                isOpen={modalConfig.isOpen}
+                onClose={handleCloseModal}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+            />
         </div>
     );
 }

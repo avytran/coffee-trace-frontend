@@ -14,8 +14,8 @@ import { BatchDetail } from "../components/Common/BatchDetail";
 import FarmerWorkspaceActions from "../components/Farmer/FarmerWorkspaceActions";
 import FarmerBatchActions from "../components/Farmer/FarmerBatchActions";
 
-import CoopWorkspaceActions from "../components/Cooperative/CoopWorkspaceActions";
-import CoopBatchActions from "../components/Cooperative/CoopBatchActions";
+import CoopWorkspaceActions from "../components/cooperative/CoopWorkspaceActions";
+import CoopBatchActions from "../components/cooperative/CoopBatchActions";
 
 import ProcessorWorkspaceActions from "../components/Processor/ProcessorWorkspaceActions";
 import ProcessorBatchActions from "../components/Processor/ProcessorBatchActions";

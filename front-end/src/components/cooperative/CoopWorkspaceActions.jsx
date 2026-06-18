@@ -3,6 +3,7 @@ import { BatchList } from "../Common/BatchList";
 import { BatchGridView } from "../Common/BatchGridView";
 import { COLORS } from "../../constants/colors";
 import { WorkspaceHeader } from "../Common/WorkspaceHeader";
+import LoadingSpinner from "../Common/LoadingSpinner";
 
 export default function CoopWorkspaceActions({ lots, loading, error, view, setView, search, setSearch, handleOpenDetail }) {
     const [activeTab, setActiveTab] = useState("pending");
@@ -24,7 +25,6 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
 
     return (
         <div className="space-y-6">
-
             <WorkspaceHeader
                 role="COOPERATIVE"
                 desc={"Kiểm định chất lượng, thẩm định các thông số kỹ thuật và quyết định phê duyệt/trả về lô hạt"}
@@ -33,7 +33,7 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
             <div className="flex border-b border-coffee-200 gap-6">
                 <button
                     onClick={() => setActiveTab("pending")}
-                    className={`pb-3 text-sm font-semibold transition-all relative flex items-center gap-2 ${activeTab === "pending" ? "text-forest-900" : "text-gray-400 hover:text-forest-700"
+                    className={`pb-3 text-sm font-semibold transition-all relative flex items-center gap-2 focus:outline-none outline-none ${activeTab === "pending" ? "text-forest-900" : "text-gray-400 hover:text-forest-700"
                         }`}
                 >
                     Lô Hàng Chờ Duyệt
@@ -49,7 +49,7 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
 
                 <button
                     onClick={() => setActiveTab("handled")}
-                    className={`pb-3 text-sm font-semibold transition-all relative ${activeTab === "handled" ? "text-forest-900" : "text-gray-400 hover:text-forest-700"
+                    className={`pb-3 text-sm font-semibold transition-all relative focus:outline-none outline-none ${activeTab === "handled" ? "text-forest-900" : "text-gray-400 hover:text-forest-700"
                         }`}
                 >
                     Đã Xử Lý
@@ -73,7 +73,7 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
                         <button
                             key={v}
                             onClick={() => setView(v)}
-                            className="px-4 h-full flex items-center justify-center rounded-lg text-sm transition-all font-medium"
+                            className="px-4 h-full flex items-center justify-center rounded-lg text-sm transition-all font-medium focus:outline-none outline-none"
                             style={{
                                 background: view === v ? "white" : "transparent",
                                 color: COLORS.forest900,
@@ -87,8 +87,8 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
             </div>
 
             {loading ? (
-                <div className="text-center py-12 text-sm" style={{ color: COLORS.coffee600 }}>
-                    Đang truy vấn danh sách dữ liệu từ chuỗi cung ứng...
+                <div className="flex flex-col items-center justify-center py-12">
+                    <LoadingSpinner loadingStatus="Đang truy vấn danh sách dữ liệu từ chuỗi cung ứng..." />
                 </div>
             ) : error ? (
                 <div className="p-4 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
@@ -96,7 +96,6 @@ export default function CoopWorkspaceActions({ lots, loading, error, view, setVi
                 </div>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl bg-white border border-dashed flex flex-col items-center justify-center p-6" style={{ borderColor: COLORS.coffee200 }}>
-                    <span className="text-3xl mb-2">{activeTab === "pending" ? "🎉" : "📭"}</span>
                     <p className="text-sm font-medium" style={{ color: COLORS.coffee600 }}>
                         {activeTab === "pending"
                             ? "Tuyệt vời! Hiện tại không có lô hàng nào đang chờ Hợp tác xã phê duyệt."

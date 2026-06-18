@@ -65,7 +65,7 @@ export default function ConnectWallet() {
                 <div className={`p-4 rounded-xl text-sm border ${
                   authStatus === 'SUSPENDED' ? 'bg-red-50 text-red-800 border-red-200' : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}>
-                  <strong>⚠️ Thông báo hệ thống:</strong> {error}
+                  <strong>Thông báo hệ thống:</strong> {error}
                 </div>
               )}
             </div>

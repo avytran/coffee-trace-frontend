@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import "./AdminControl.css";
 import CreateUserForm from "../../components/Admin/CreateUserForm";
-import { getRoleStyles, getStatusStyles, getActionStyles } from "../../utils/getStyles";
+import { getRoleStyles, getStatusStyles } from "../../utils/getStyles";
+import { NotificationModal } from "../../components/Common/NotificationModal";
+import { parseWeb3Error } from "../../utils/errorHandler";
 
 const AdminControl = () => {
-  const [activeTab, setActiveTab] = useState("permissions");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
   const [permissions, setPermissions] = useState([]);
-  const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ totalPerms: 0, totalFarmers: 0, totalRoasters: 0, pendingRequests: 0, totalWorkspaces: 142 });
 
@@ -19,17 +18,18 @@ const AdminControl = () => {
   const [permPage, setPermPage] = useState(1);
   const [totalPermsCount, setTotalPermsCount] = useState(0);
 
-  const [auditSearch, setAuditSearch] = useState("");
-  const [auditEvent, setAuditEvent] = useState("");
-  const [auditStatus, setAuditStatus] = useState("");
-  const [auditPage, setAuditPage] = useState(1);
-  const [totalAuditsCount, setTotalAuditsCount] = useState(0);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "success",
+    callback: null,
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await axiosInstance.get("/admin/dashboard-stats");
-        // Ánh xạ dữ liệu từ API sang state
         setStats({
           totalPerms: response.data.data?.totalUsers || 0,
           totalFarmers: response.data.data?.activeUsers || 0,
@@ -56,7 +56,6 @@ const AdminControl = () => {
           limit: 10
         }
       });
-      // Ánh xạ dữ liệu từ API response
       const formattedData = (response.data.users || []).map(item => ({
         id: item.id,
         address: item.wallet_address,
@@ -66,7 +65,6 @@ const AdminControl = () => {
       }));
 
       setPermissions(formattedData);
-      // Lấy tổng số từ pagination object
       setTotalPermsCount(response.data.pagination?.totalRecords || formattedData.length);
     } catch (err) {
       console.error("Lỗi tải danh sách phân quyền:", err);
@@ -75,49 +73,20 @@ const AdminControl = () => {
     }
   };
 
-  const fetchAuditLogs = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get("/admin/audit-logs", {
-        params: {
-          txHash: auditSearch,
-          event: auditEvent,
-          status: auditStatus,
-          page: auditPage,
-          limit: 10
-        }
-      });
-      setAuditLogs(response.data.data || []);
-      setTotalAuditsCount(response.data.total || 0);
-    } catch (err) {
-      console.error("Lỗi tải nhật ký hệ thống:", err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    fetchPermissions();
+  }, [searchWallet, filterWorkspace, filterRole, permPage]);
+
+  const handleCloseModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    if (modalConfig.callback) {
+      modalConfig.callback();
     }
   };
-
-  useEffect(() => {
-    if (activeTab === "permissions") {
-      fetchPermissions();
-    } else {
-      fetchAuditLogs();
-    }
-  }, [activeTab, searchWallet, filterWorkspace, filterRole, permPage, auditSearch, auditEvent, auditStatus, auditPage]);
 
   const handleCreateSuccess = () => {
     setIsCreateModalOpen(false);
     fetchPermissions();
-  };
-
-  const handleToggleAccount = async (userId, currentStatus) => {
-    const action = currentStatus === "Active" ? "deactivate" : "activate";
-    try {
-      await axiosInstance.post(`/admin/users/${userId}/${action}`);
-      alert(`Đã ${action === "activate" ? "kích hoạt" : "khóa"} tài khoản thành công.`);
-      fetchPermissions();
-    } catch {
-      alert("Lỗi khi thực hiện thao tác. Vui lòng thử lại.");
-    }
   };
 
   const handleGrantOnChain = async (walletAddress, role) => {
@@ -127,41 +96,15 @@ const AdminControl = () => {
         role, 
         chainId: 1,
       });
-      alert(`Đã gửi yêu cầu cấp quyền on-chain cho ${walletAddress}`);
-      if (activeTab === "audit") fetchAuditLogs();
-    } catch {
-      alert("Lỗi khi gửi giao dịch on-chain. Vui lòng kiểm tra kết nối ví.");
-    }
-  };
-
-  const handleApprove = async (perm) => {
-    try {
-      await axiosInstance.patch(`/admin/permissions/${perm.id}/approve`);
-      await handleGrantOnChain(perm.address, perm.role);
-      fetchPermissions();
-    } catch {
-      alert("Lỗi phê duyệt. Vui lòng thử lại.");
-    }
-  };
-
-  const handleReject = async (permId) => {
-    try {
-      await axiosInstance.patch(`/admin/permissions/${permId}/reject`);
-      alert("Đã từ chối yêu cầu.");
-      fetchPermissions();
-    } catch {
-      alert("Lỗi từ chối. Vui lòng thử lại.");
-    }
-  };
-
-  const handleRevoke = async (permId) => {
-    if (!window.confirm("Bạn có chắc muốn thu hồi quyền này?")) return;
-    try {
-      await axiosInstance.delete(`/admin/permissions/${permId}`);
-      alert("Đã thu hồi quyền thành công.");
-      fetchPermissions();
-    } catch {
-      alert("Lỗi thu hồi quyền. Vui lòng thử lại.");
+      
+      setModalConfig({
+        isOpen: true,
+        title: "Giao Dịch Đã Gửi!",
+        message: `Đã gửi yêu cầu cấp quyền on-chain cho địa chỉ ví ${walletAddress}.`,
+        type: "success"
+      });
+    } catch (err) {
+      setModalConfig(parseWeb3Error(err));
     }
   };
 
@@ -176,7 +119,6 @@ const AdminControl = () => {
       <main className="flex-grow pt-10 pb-24 flex items-start justify-center min-h-[calc(100vh-80px)]">
         <div className="max-w-[1440px] w-full mx-auto px-6 lg:px-12 flex flex-col lg:flex-row gap-8">
 
-          {/* Sidebar */}
           <aside className="w-full lg:w-80 flex-shrink-0 space-y-6">
             <div className="glass-panel p-6 rounded-[2rem] border border-coffee-200 shadow-sm bg-white/90 relative overflow-hidden">
               <div className="absolute -right-10 -top-10 w-32 h-32 bg-forest-100 rounded-full blur-2xl opacity-50 pointer-events-none"></div>
@@ -219,21 +161,16 @@ const AdminControl = () => {
             </nav>
           </aside>
 
-          {/* Main Content Area */}
           <div className="flex-grow space-y-6 w-full max-w-full overflow-hidden">
             
-            {/* Header Controls */}
             <div className="glass-panel p-6 rounded-[1.5rem] border border-coffee-200 bg-white/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-serif font-bold text-forest-900">Quản Trị Hệ Thống</h1>
-                <p className="text-sm text-forest-600 mt-1">Quản lý quyền truy cập chuỗi cung ứng nông sản và giám sát Blockchain Audit Trail.</p>
+                <p className="text-sm text-forest-600 mt-1">Quản lý quyền truy cập chuỗi cung ứng nông sản.</p>
               </div>
               <div className="bg-coffee-50 p-1 rounded-xl border border-coffee-200 inline-flex">
-                <button onClick={() => setActiveTab("permissions")} className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "permissions" ? "tab-active shadow-sm" : "tab-inactive"}`}>
+                <button className="px-6 py-2 rounded-lg text-sm font-semibold transition-all tab-active shadow-sm">
                   <i className="fa-solid fa-user-shield mr-2"></i>Phân Quyền
-                </button>
-                <button onClick={() => setActiveTab("audit")} className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === "audit" ? "tab-active shadow-sm" : "tab-inactive"}`}>
-                  <i className="fa-solid fa-list-check mr-2"></i>Nhật Ký (Audit Log)
                 </button>
               </div>
             </div>
@@ -244,165 +181,99 @@ const AdminControl = () => {
               </div>
             )}
 
-            {/* ── TAB: Phân Quyền ──────────────────────────────────────────── */}
-            {activeTab === "permissions" && (
-              <div className="space-y-6">
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/50 p-4 rounded-2xl border border-coffee-200 backdrop-blur-sm">
-                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <div className="relative w-full md:w-64">
-                      <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-forest-400"></i>
-                      <input
-                        type="text"
-                        value={searchWallet}
-                        onChange={(e) => { setSearchWallet(e.target.value); setPermPage(1); }}
-                        placeholder="Tìm kiếm địa chỉ ví..."
-                        className="w-full pl-10 pr-4 py-2 rounded-xl border border-coffee-200 bg-white focus:outline-none focus:ring-2 focus:ring-forest-500 text-sm text-forest-900"
-                      />
-                    </div>
-                    
-                    {/* ĐỒNG BỘ VALUE ĐIỀU KIỆN THEO ENUM SỬA ĐỔI */}
-                    <select value={filterRole} onChange={(e) => { setFilterRole(e.target.value); setPermPage(1); }} className="px-4 py-2 rounded-xl border border-coffee-200 bg-white text-sm text-forest-700 focus:outline-none focus:ring-2 focus:ring-forest-500">
-                      <option value="">Tất cả Vai trò</option>
-                      <option value="FARMER">Nông dân (FARMER)</option>
-                      <option value="ROASTER">Nhà Rang Xay (ROASTER)</option>
-                      <option value="DISTRIBUTOR">Nhà Phân Phối (DISTRIBUTOR)</option>
-                      <option value="EXPORTER">Nhà Xuất Khẩu (EXPORTER)</option>
-                      <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
-                    </select>
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/50 p-4 rounded-2xl border border-coffee-200 backdrop-blur-sm">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  <div className="relative w-full md:w-64">
+                    <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-forest-400"></i>
+                    <input
+                      type="text"
+                      value={searchWallet}
+                      onChange={(e) => { setSearchWallet(e.target.value); setPermPage(1); }}
+                      placeholder="Tìm kiếm địa chỉ ví..."
+                      className="w-full pl-10 pr-4 py-2 rounded-xl border border-coffee-200 bg-white focus:outline-none focus:ring-2 focus:ring-forest-500 text-sm text-forest-900"
+                    />
                   </div>
                   
-                  <button onClick={() => setIsCreateModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-forest-800 text-white font-semibold hover:bg-forest-900 transition-all text-sm flex items-center justify-center gap-2 shadow-sm">
-                    <i className="fa-solid fa-plus"></i> Cấp quyền đối tác mới
-                  </button>
+                  <select value={filterRole} onChange={(e) => { setFilterRole(e.target.value); setPermPage(1); }} className="px-4 py-2 rounded-xl border border-coffee-200 bg-white text-sm text-forest-700 focus:outline-none focus:ring-2 focus:ring-forest-500">
+                    <option value="">Tất cả Vai trò</option>
+                    <option value="FARMER">Nông dân (FARMER)</option>
+                    <option value="ROASTER">Nhà Rang Xay (ROASTER)</option>
+                    <option value="DISTRIBUTOR">Nhà Phân Phối (DISTRIBUTOR)</option>
+                    <option value="EXPORTER">Nhà Xuất Khẩu (EXPORTER)</option>
+                    <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
+                  </select>
                 </div>
+                
+                <button onClick={() => setIsCreateModalOpen(true)} className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-forest-800 text-white font-semibold hover:bg-forest-900 transition-all text-sm flex items-center justify-center gap-2 shadow-sm">
+                  <i className="fa-solid fa-plus"></i> Cấp quyền đối tác mới
+                </button>
+              </div>
 
-                {/* Table Render */}
-                <div className="dashboard-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-coffee-50/80 border-b border-coffee-200 text-xs uppercase tracking-wider text-forest-700 font-semibold">
-                          <th className="p-4 w-12"><input type="checkbox" className="custom-checkbox" /></th>
-                          <th className="p-4">Địa chỉ Ví / Đối Tác</th>
-                          <th className="p-4">Vai trò Hệ Thống</th>
-                          <th className="p-4">Trạng thái</th>
-                          <th className="p-4 text-right">Hành động</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-coffee-100 text-sm">
-                        {permissions.map((perm) => {
-                          const roleStyle = getRoleStyles(perm.role);
-                          const statusStyle = getStatusStyles(perm.status);
-                          return (
-                            <tr key={perm.id} className="hover:bg-coffee-50/50 transition-colors group">
-                              <td className="p-4"><input type="checkbox" className="custom-checkbox" /></td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-forest-200 to-coffee-300 flex items-center justify-center text-forest-800 font-bold text-xs shadow-sm">
-                                    {perm.address ? perm.address.slice(0, 4) : "0x"}
-                                  </div>
-                                  <div>
-                                    <div className="font-mono font-medium text-forest-900 flex items-center gap-1">
-                                      {perm.address ? `${perm.address.slice(0, 6)}...${perm.address.slice(-4)}` : "Chưa có ví"}
-                                      <button onClick={() => handleCopy(perm.address)} className="text-gray-400 hover:text-forest-700 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                                        <i className="fa-regular fa-copy text-xs"></i>
-                                      </button>
-                                    </div>
-                                    <div className="text-xs text-forest-500">{perm.name}</div>
-                                  </div>
+              <div className="dashboard-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-coffee-50/80 border-b border-coffee-200 text-xs uppercase tracking-wider text-forest-700 font-semibold">
+                        <th className="p-4 w-12"><input type="checkbox" className="custom-checkbox" /></th>
+                        <th className="p-4">Địa chỉ Ví / Đối Tác</th>
+                        <th className="p-4">Vai trò Hệ Thống</th>
+                        <th className="p-4">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-coffee-100 text-sm">
+                      {permissions.map((perm) => {
+                        const roleStyle = getRoleStyles(perm.role);
+                        const statusStyle = getStatusStyles(perm.status);
+                        return (
+                          <tr key={perm.id} className="hover:bg-coffee-50/50 transition-colors group">
+                            <td className="p-4"><input type="checkbox" className="custom-checkbox" /></td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-forest-200 to-coffee-300 flex items-center justify-center text-forest-800 font-bold text-xs shadow-sm">
+                                  {perm.address ? perm.address.slice(0, 4) : "0x"}
                                 </div>
-                              </td>
-                              <td className="p-4">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${roleStyle.bg} ${roleStyle.text}`}>
-                                  {roleStyle.label}
-                                </span>
-                              </td>
-                              <td className="p-4">
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} border ${statusStyle.border}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span> {perm.status}
-                                </span>
-                              </td>
-                              <td className="p-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {perm.status === "PENDING" ? (
-                                    <>
-                                      <button onClick={() => handleApprove(perm)} className="px-3 py-1 rounded-lg text-xs font-medium text-white bg-forest-600 hover:bg-forest-700 transition-colors">Duyệt</button>
-                                      <button onClick={() => handleReject(perm.id)} className="px-3 py-1 rounded-lg text-xs font-medium text-forest-700 bg-coffee-100 hover:bg-coffee-200 transition-colors">Từ chối</button>
-                                    </>
-                                  ) : (
-                                    <button onClick={() => handleRevoke(perm.id)} className="px-3 py-1 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">Thu hồi</button>
-                                  )}
+                                <div>
+                                  <div className="font-mono font-medium text-forest-900 flex items-center gap-1">
+                                    {perm.address ? `${perm.address.slice(0, 6)}...${perm.address.slice(-4)}` : "Chưa có ví"}
+                                    <button onClick={() => handleCopy(perm.address)} className="text-gray-400 hover:text-forest-700 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                                      <i className="fa-regular fa-copy text-xs"></i>
+                                    </button>
+                                  </div>
+                                  <div className="text-xs text-forest-500">{perm.name}</div>
                                 </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  {/* Phân Trang */}
-                  <div className="p-4 border-t border-coffee-100 bg-white/50 flex items-center justify-between">
-                    <span className="text-sm text-forest-600">Tổng số đối tác: {totalPermsCount}</span>
-                    <div className="flex gap-1">
-                      <button disabled={permPage === 1} onClick={() => setPermPage(p => p - 1)} className="px-3 py-1 rounded-lg border border-coffee-200 text-forest-700 bg-white text-sm disabled:opacity-50">Trước</button>
-                      <button className="px-3 py-1 rounded-lg border border-forest-500 bg-forest-50 text-forest-800 font-medium text-sm">{permPage}</button>
-                      <button disabled={permissions.length < 10} onClick={() => setPermPage(p => p + 1)} className="px-3 py-1 rounded-lg border border-coffee-200 bg-white text-sm text-forest-700 disabled:opacity-50">Tiếp</button>
-                    </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${roleStyle.bg} ${roleStyle.text}`}>
+                                {roleStyle.label}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} border ${statusStyle.border}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span> {perm.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-coffee-100 bg-white/50 flex items-center justify-between">
+                  <span className="text-sm text-forest-600">Tổng số đối tác: {totalPermsCount}</span>
+                  <div className="flex gap-1">
+                    <button disabled={permPage === 1} onClick={() => setPermPage(p => p - 1)} className="px-3 py-1 rounded-lg border border-coffee-200 text-forest-700 bg-white text-sm disabled:opacity-50">Trước</button>
+                    <button className="px-3 py-1 rounded-lg border border-forest-500 bg-forest-50 text-forest-800 font-medium text-sm">{permPage}</button>
+                    <button disabled={permissions.length < 10} onClick={() => setPermPage(p => p + 1)} className="px-3 py-1 rounded-lg border border-coffee-200 bg-white text-sm text-forest-700 disabled:opacity-50">Tiếp</button>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* ── TAB: Audit Log ────────────────────────────────────────────── */}
-            {activeTab === "audit" && (
-              <div className="space-y-6">
-                <div className="dashboard-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-forest-900 text-white text-xs uppercase tracking-wider font-semibold">
-                          <th className="p-4 rounded-tl-lg">Thời gian</th>
-                          <th className="p-4">TxHash</th>
-                          <th className="p-4">Actor</th>
-                          <th className="p-4">Hành động</th>
-                          <th className="p-4">Trạng thái</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-coffee-200 text-sm font-mono bg-white">
-                        {auditLogs.map((log) => {
-                          const actionStyle = getActionStyles(log.actionTag);
-                          const statusStyle = getStatusStyles(log.status);
-                          return (
-                            <tr key={log.id} className="hover:bg-forest-50 transition-colors">
-                              <td className="p-4 text-forest-600 text-xs">{log.time}</td>
-                              <td className="p-4">
-                                <button onClick={() => handleCopy(log.txHash)} className="text-forest-700 hover:text-forest-900 font-semibold flex items-center gap-1.5 group">
-                                  {log.txHash ? `${log.txHash.slice(0, 6)}...${log.txHash.slice(-4)}` : "0x..."}
-                                </button>
-                              </td>
-                              <td className="p-4 text-forest-800">{log.actor}</td>
-                              <td className="p-4">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded ${actionStyle.bg} ${actionStyle.text} border ${actionStyle.border} text-xs font-sans font-medium`}>{log.actionTag}</span>
-                                <span className="text-xs text-forest-500 ml-2 font-sans block mt-1">{log.actionDesc}</span>
-                              </td>
-                              <td className="p-4">
-                                <div className={`flex items-center gap-1.5 ${statusStyle.textClass} font-sans font-medium text-xs`}><i className={statusStyle.icon}></i> {log.status}</div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </main>
 
-      {/* ── SỬA KHỐI MODAL: Chỉ hiển thị Form khi biến trạng thái kích hoạt mở là true ── */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="w-full max-w-xl relative">
@@ -413,6 +284,14 @@ const AdminControl = () => {
           </div>
         </div>
       )}
+
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        onClose={handleCloseModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 };

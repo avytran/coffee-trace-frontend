@@ -68,7 +68,7 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
   if (error) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center max-w-xl mx-auto my-12">
-        <p className="text-red-700 font-semibold mb-4">⚠️ Lỗi: {error}</p>
+        <p className="text-red-700 font-semibold mb-4">Lỗi: {error}</p>
         <button onClick={onBack} className="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-xl">Quay Lại Danh Sách</button>
       </div>
     );
@@ -111,7 +111,7 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
         <div className="lg:col-span-5 space-y-6">
           <Card className="p-6 bg-white border" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-4 pb-2 border-b flex items-center gap-2" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>
-              ℹ️ Thông Số Kỹ Thuật
+              Thông Số Kỹ Thuật
             </h3>
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
@@ -154,7 +154,7 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
           {/* Minh chứng IPFS */}
           <Card className="p-6 bg-white border" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-4 pb-2 border-b flex items-center gap-2" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>
-              📂 Minh Chứng Chuỗi Cung Ứng (IPFS)
+              Minh Chứng Chuỗi Cung Ứng (IPFS)
             </h3>
             <div className="space-y-3">
               {extendedDetails?.documents.length === 0 ? (
@@ -183,7 +183,7 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
         <div className="lg:col-span-7">
           <Card className="p-6 bg-white border h-full" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-6 pb-2 border-b flex items-center justify-between" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>
-              <span>⛓️ Sổ Cái Bất Biến (Blockchain Ledger Timeline)</span>
+              <span>Sổ Cái Bất Biến (Blockchain Ledger Timeline)</span>
             </h3>
             <div className="space-y-6 relative pl-2">
               {extendedDetails?.ledgerHistory.length === 0 ? (
