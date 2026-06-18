@@ -1,0 +1,65 @@
+/* AdminControl.css */
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(221, 184, 146, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-radius: 1rem;
+}
+
+/* Tab States */
+.tab-active {
+  background-color: #4A9D7D;
+  color: white;
+  border-color: #4A9D7D;
+}
+.tab-inactive {
+  background-color: transparent;
+  color: #5C3A21;
+  border-color: transparent;
+}
+.tab-inactive:hover {
+  background-color: #F7EBE1;
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+  appearance: none;
+  background-color: #fff;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 1px solid #DDB892;
+  border-radius: 0.25em;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+.custom-checkbox::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #4A9D7D;
+  background-color: #4A9D7D;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.custom-checkbox:checked::before { transform: scale(1); }
+.custom-checkbox:checked { border-color: #4A9D7D; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #FDF8F5; }
+::-webkit-scrollbar-thumb { background: #DDB892; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #B08968; }
