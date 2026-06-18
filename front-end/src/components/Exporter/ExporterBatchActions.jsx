@@ -155,7 +155,7 @@ export default function ExporterBatchActions({ lotInfo, onRefresh }) {
             // ── BƯỚC 3: ĐỒNG BỘ DỮ LIỆU GIAO DỊCH VỀ POSTGRESQL LOCAL ──
             console.log("💾 3. Ghi vết dữ liệu bàn giao thương mại vào PostgreSQL...");
             try {
-                await axiosInstance.post('/processor/batches/save-transfer-exporter-db', {
+                await axiosInstance.post('/exporter/batches/save-transfer-exporter-db', {
                     batchId: lotInfo.id,
                     status: "EXPORTED",
                     exporterId: targetExporter.id,
