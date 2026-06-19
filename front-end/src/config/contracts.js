@@ -1,30 +1,48 @@
 /**
  * Tập trung quản lý địa chỉ Smart Contract hệ thống Coffee Traceability
+ * Tự động chuyển đổi địa chỉ động dựa trên biến môi trường (.env)
  */
+
+// 💡 Nhận diện môi trường (Hỗ trợ cả Vite và Create React App)
+const env = import.meta.env?.VITE_NODE_ENV || process.env?.REACT_APP_NODE_ENV || 'local';
+const isSepolia = env === 'sepolia';
+
+// 💡 Trích xuất địa chỉ theo môi trường được kích hoạt
+const USER_REGISTRY_ADDR = isSepolia 
+  ? (import.meta.env?.VITE_SEPOLIA_USER_REGISTRY || process.env?.REACT_APP_SEPOLIA_USER_REGISTRY)
+  : (import.meta.env?.VITE_LOCAL_USER_REGISTRY || process.env?.REACT_APP_LOCAL_USER_REGISTRY);
+
+const BATCH_REGISTRY_ADDR = isSepolia 
+  ? (import.meta.env?.VITE_SEPOLIA_BATCH_REGISTRY || process.env?.REACT_APP_SEPOLIA_BATCH_REGISTRY)
+  : (import.meta.env?.VITE_LOCAL_BATCH_REGISTRY || process.env?.REACT_APP_LOCAL_BATCH_REGISTRY);
+
+const EVENT_REGISTRY_ADDR = isSepolia 
+  ? (import.meta.env?.VITE_SEPOLIA_EVENT_REGISTRY || process.env?.REACT_APP_SEPOLIA_EVENT_REGISTRY)
+  : (import.meta.env?.VITE_LOCAL_EVENT_REGISTRY || process.env?.REACT_APP_LOCAL_EVENT_REGISTRY);
 
 export const CONTRACT_ADDRESSES = {
   // 1️⃣ Contract Quản lý danh tính và phân quyền đối tác
   USER_REGISTRY: {
-    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    address: USER_REGISTRY_ADDR,
     name: "User Registry Contract",
     description: "Quản lý đăng ký tài khoản, vai trò (Role) và trạng thái (Status) chuỗi cung ứng.",
   },
   // 2️⃣ Contract Quản lý vòng đời và quyền sở hữu lô hàng cà phê
   BATCH_REGISTRY: {
-    address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    address: BATCH_REGISTRY_ADDR,
     name: "Batch Registry Contract",
     description: "Khởi tạo lô hàng, cập nhật trạng thái chuỗi cung ứng và chuyển giao quyền sở hữu.",
   },
   // 3️⃣ Contract Sổ cái ghi vết nhật ký bất biến (Audit Log)
   BATCH_EVENT_REGISTRY: {
-    address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    address: EVENT_REGISTRY_ADDR,
     name: "Batch Event Registry Contract",
     description: "Lưu vết lịch sử tác động, mã băm đối soát bảo mật dữ liệu thô chống giả mạo.",
   }
 };
 
 export const CONTRACT_ABIS = {
-  // ABI cho UserRegistry.sol
+  // (Giữ nguyên toàn bộ mảng ABI như code cũ của bạn vì ABI không đổi theo mạng công nghệ)
   USER_REGISTRY: [
     "function registerUser(address _wallet, uint8 _role)",
     "function updateUserRole(address _wallet, uint8 _newRole)",
@@ -36,8 +54,6 @@ export const CONTRACT_ABIS = {
     "event UserRoleUpdated(address indexed wallet, uint8 oldRole, uint8 newRole, address indexed updatedBy)",
     "event UserStatusUpdated(address indexed wallet, uint8 oldStatus, uint8 newStatus, address indexed updatedBy)"
   ],
-
-  // ABI cho BatchRegistry.sol
   BATCH_REGISTRY: [
     "function createBatch(string _batchId, string _traceabilityCode, string _ipfsCid, uint256 _weight)",
     "function updateBatchStatus(string _batchId, uint8 _newStatus)",
@@ -47,8 +63,6 @@ export const CONTRACT_ABIS = {
     "event BatchStatusUpdated(string batchId, uint8 status)",
     "event BatchOwnershipTransferred(string batchId, address indexed from, address indexed to)"
   ],
-
-  // ABI cho BatchEventRegistry.sol
   BATCH_EVENT_REGISTRY: [
     "function addBatchEvent(string _batchId, uint8 _action, string _ipfsCid, bytes32 _eventHash)",
     "function getBatchEvents(string _batchId) view returns (tuple(string batchId, uint8 action, address actor, string ipfsCid, bytes32 eventHash, uint256 timestamp)[])",
@@ -57,20 +71,15 @@ export const CONTRACT_ABIS = {
   ]
 };
 
-/**
- * Lấy địa chỉ contract công khai
- */
+// Các hàm bổ trợ getContractAddress, getContractABI, isValidContractAddress giữ nguyên vẹn...
 export const getContractAddress = (contractName) => {
   const contract = CONTRACT_ADDRESSES[contractName];
-  if (!contract) {
-    throw new Error(`[Web3 Config Error] Contract với tên "${contractName}" không tồn tại.`);
+  if (!contract || !contract.address) {
+    throw new Error(`[Web3 Config Error] Địa chỉ Contract "${contractName}" trống hoặc cấu hình lỗi môi trường.`);
   }
   return contract.address;
 };
 
-/**
- * Lấy danh sách ABI (Human-Readable Format)
- */
 export const getContractABI = (contractName) => {
   const abi = CONTRACT_ABIS[contractName];
   if (!abi) {
@@ -79,9 +88,9 @@ export const getContractABI = (contractName) => {
   return abi;
 };
 
-/**
- * Xác thực địa chỉ ví hoặc contract chuẩn EVM
- */
 export const isValidContractAddress = (address) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
+
+// Log kiểm tra trạng thái khi ứng dụng React khởi động
+console.log(`📡 [Frontend Web3 Active]: Khởi động dApp trên mạng ${env.toUpperCase()}`);
