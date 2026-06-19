@@ -53,13 +53,15 @@ export default function ConnectWallet() {
   };
 
   const isWrongNetwork = account && (
-    (isSepoliaTarget && network?.toLowerCase() !== 'sepolia') ||
-    (!isSepoliaTarget &&
-      !network?.toLowerCase().includes('localhost') &&
-      !network?.toLowerCase().includes('hardhat') &&
-      !network?.toLowerCase().includes('local')
-    )
-  );
+  isSepoliaTarget 
+    ? !network?.toLowerCase().includes('sepolia')
+    : !(
+        network?.toLowerCase().includes('localhost') ||
+        network?.toLowerCase().includes('hardhat') ||
+        network?.toLowerCase().includes('local') ||
+        network?.toLowerCase().includes('unknown')
+      )
+);
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-brand-lightcream text-forest-900 font-sans">
