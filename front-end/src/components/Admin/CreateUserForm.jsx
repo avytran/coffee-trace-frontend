@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ethers } from "ethers";
 import axiosInstance from "../../utils/axiosInstance";
 import {
   ensureHardhatNetwork,
@@ -48,7 +47,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (submitting) return;
 
     const walletAddress = formData.wallet_address.trim();
@@ -90,9 +88,8 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       await ensureHardhatNetwork();
       
       const provider = getEthersProvider();
-      
       if (provider && (provider.pollingInterval === 4000 || !provider.pollingInterval)) {
-        provider.pollingInterval = 15000;
+        provider.pollingInterval = 15000; 
       }
 
       const signer = await getEthersSigner(provider);
@@ -100,14 +97,12 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       const roleIndex = ROLE_INDEX_MAP[formData.role];
       
       setLoadingStatus("Vui lòng mở ví MetaMask và xác nhận giao dịch đăng ký...");
-      
       const tx = await contract.registerUser(walletAddress, roleIndex, {
-        gasLimit: 300000
+        gasLimit: 300000 
       });
 
       setLoadingStatus("Giao dịch đang được xử lý trên Blockchain... Vui lòng đợi block xác nhận.");
       const receipt = await tx.wait();
-      console.log("Giao dịch đã đóng block thành công:", receipt);
 
       setLoadingStatus("Bước 3: Đang kích hoạt đồng bộ trạng thái tài khoản về Cơ sở dữ liệu...");
       const syncResponse = await axiosInstance.post("/admin/users/sync-success", {
@@ -131,15 +126,14 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       }
 
     } catch (err) {
-      console.error("Lỗi hệ thống trong luồng xử lý hỗn hợp:", err);
-      setSubmitting(false);
+      console.error(err);
+      setSubmitting(false); 
       setModalConfig(parseWeb3Error(err));
     }
   };
 
   return (
     <div className="relative glass-panel p-8 rounded-[2rem] border border-coffee-200 bg-white/95 max-w-xl mx-auto shadow-md overflow-hidden">
-      
       {submitting && <LoadingSpinner loadingStatus={loadingStatus} />}
 
       <div className="mb-6">
@@ -149,7 +143,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* name */}
         <div>
           <label className="block text-xs font-semibold text-forest-700 uppercase tracking-wider mb-2">
             Họ và Tên / Tên cơ sở đại diện <span className="text-red-500">*</span>
@@ -158,7 +151,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
             type="text"
             name="name"
             required
-            disabled={submitting}
+            disabled={submitting} 
             value={formData.name}
             onChange={handleInputChange}
             placeholder="Nhập tên hiển thị hoặc tên cơ sở..."
@@ -166,7 +159,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           />
         </div>
 
-        {/* wallet_address */}
         <div>
           <label className="block text-xs font-semibold text-forest-700 uppercase tracking-wider mb-2">
             Địa chỉ Ví Khách Hàng<span className="text-red-500">*</span>
@@ -175,7 +167,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
             type="text"
             name="wallet_address"
             required
-            disabled={submitting}
+            disabled={submitting} 
             value={formData.wallet_address}
             onChange={handleInputChange}
             placeholder="0x..."
@@ -183,7 +175,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           />
         </div>
 
-        {/* role */}
         <div>
           <label className="block text-xs font-semibold text-forest-700 uppercase tracking-wider mb-2">
             Vai trò Chuỗi Cung Ứng<span className="text-red-500">*</span>
@@ -191,7 +182,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           <select
             name="role"
             required
-            disabled={submitting}
+            disabled={submitting} 
             value={formData.role}
             onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm font-semibold focus:ring-2 focus:ring-forest-500 bg-white text-forest-900 disabled:bg-coffee-100 disabled:text-forest-400"
@@ -218,7 +209,7 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           )}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting} 
             className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-forest-800 hover:bg-forest-900 transition-all flex items-center gap-2 disabled:bg-forest-400 disabled:cursor-not-allowed"
           >
             {submitting ? (

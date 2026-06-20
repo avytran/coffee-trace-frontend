@@ -8,7 +8,7 @@ export function Web3AuthProvider({ children }) {
   const [network, setNetwork] = useState('Chưa kết nối');
   const [role, setRole] = useState('ANONYMOUS');
   const [userData, setUserData] = useState(null);
-  const [authStatus, setAuthStatus] = useState(''); // UNREGISTERED, SUSPENDED, ACTIVE
+  const [authStatus, setAuthStatus] = useState(''); 
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,42 +20,35 @@ export function Web3AuthProvider({ children }) {
     return `Chain ID: ${chainId}`;
   };
 
-  // 1. Hàm kiểm tra token cũ có sẵn để Auto-Login (KHÔNG BẮT KÝ LẠI)
   const checkExistingAuth = async (walletAddress) => {
     const localToken = localStorage.getItem('token');
     const localAddress = localStorage.getItem('user_address');
 
     if (localToken && localAddress && localAddress.toLowerCase() === walletAddress.toLowerCase()) {
       try {
-        console.log('🔄 Tìm thấy Token JWT hợp lệ, đang khôi phục phiên làm việc...');
-        // Gọi API lấy thông tin profile để xác thực token còn hạn
         const response = await axiosInstance.get('/auth/profile'); 
         const data = response.data;
 
         setRole(data.user.role);
         setUserData(data.user);
         setAuthStatus('ACTIVE');
-        return true; // Khôi phục thành công
+        return true; 
       } catch (err) {
-        console.warn('Token hết hạn hoặc không hợp lệ, yêu cầu ký lại:', err);
         logout();
       }
     }
-    return false; // Phải ký lại
+    return false; 
   };
 
-  // 2. Luồng ký xác thực mới bằng Chữ ký số mã hóa
   const verifyWalletWithJwt = async (walletAddress) => {
     try {
       const nonceMessage = `Chào mừng bạn đến với ROBUSTRACE!\n\nNhấn ký để xác thực quyền truy cập vào hệ thống với địa chỉ ví:\n${walletAddress.toLowerCase()}\n\nThời gian: ${new Date().toISOString()}`;
       
-      console.log('📡 Đang kích hoạt MetaMask ký chuỗi bảo mật...');
       const signature = await window.ethereum.request({
         method: 'personal_sign',
         params: [nonceMessage, walletAddress],
       });
 
-      console.log('🚀 Gửi gói tin chữ ký lên Backend...');
       const response = await axiosInstance.post('/auth/verify-wallet', {
         wallet_address: walletAddress,
         signature: signature,
@@ -72,12 +65,10 @@ export function Web3AuthProvider({ children }) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user_role', data.user.role);
         localStorage.setItem('user_address', walletAddress.toLowerCase());
-        console.log(`🔑 Cấp mới JWT Token thành công: ${data.user.role}`);
       } else {
         handleUnauthenticated(data);
       }
     } catch (err) {
-      console.error('❌ Lỗi luồng kết nối hoặc người dùng từ chối ký:', err);
       if (err?.code === 4001) {
         setError('Bạn đã hủy bỏ yêu cầu ký thông điệp xác thực trên MetaMask.');
       } else if (err.response) {
@@ -103,7 +94,6 @@ export function Web3AuthProvider({ children }) {
     localStorage.clear();
   };
 
-  // 3. Luồng tương tác thủ công khi bấm nút Kết nối
   const connectMetaMask = async () => {
     setError('');
     setAuthStatus('');
@@ -122,7 +112,6 @@ export function Web3AuthProvider({ children }) {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         setNetwork(parseChainId(chainId));
         
-        // Kiểm tra xem có phục hồi đăng nhập từ Token cũ được không, nếu không mới bắt Ký
         const isAuthenticated = await checkExistingAuth(selected);
         if (!isAuthenticated) {
           await verifyWalletWithJwt(selected);
@@ -139,12 +128,16 @@ export function Web3AuthProvider({ children }) {
     }
   };
 
-  // 4. Theo dõi vòng đời kết nối ví ngầm
   useEffect(() => {
     if (!window.ethereum) return;
 
-    window.ethereum.request({ method: 'eth_accounts' })
-      .then(async (accounts) => {
+    let isSubscribed = true;
+
+    const initWeb3Auth = async () => {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (!isSubscribed) return;
+
         if (accounts.length > 0) {
           const currentAccount = accounts[0];
           setAccount(currentAccount);
@@ -152,14 +145,21 @@ export function Web3AuthProvider({ children }) {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
           setNetwork(parseChainId(chainId));
           
-          // 🌟 AUTO LOGIN KHÔNG POP-UP KÝ
           await checkExistingAuth(currentAccount);
         }
-      })
-      .catch((err) => console.error(err));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    initWeb3Auth();
 
     const handleAccountsChanged = async (accounts) => {
+      if (!isSubscribed) return;
+      
       const newAccount = accounts[0] || null;
+      if (newAccount?.toLowerCase() === account?.toLowerCase()) return;
+
       setAccount(newAccount);
       setError('');
       setAuthStatus('');
@@ -176,17 +176,20 @@ export function Web3AuthProvider({ children }) {
     };
 
     const handleChainChanged = (chainId) => {
+      if (!isSubscribed) return;
       setNetwork(parseChainId(chainId));
+      window.location.reload(); 
     };
 
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('chainChanged', handleChainChanged);
 
     return () => {
+      isSubscribed = false;
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       window.ethereum.removeListener('chainChanged', handleChainChanged);
     };
-  }, []);
+  }, [account]);
 
   return (
     <Web3AuthContext.Provider value={{
