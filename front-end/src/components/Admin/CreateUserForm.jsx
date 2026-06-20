@@ -1,7 +1,6 @@
 import { useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import {
-  ensureHardhatNetwork,
   getEthersProvider,
   getEthersSigner,
   createContract,
@@ -85,7 +84,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       createdUserId = backendRes.data.userId; 
 
       setLoadingStatus("Bước 2: Đang kết nối ví và kiểm tra cấu hình mạng MetaMask...");
-      await ensureHardhatNetwork();
       
       const provider = getEthersProvider();
       if (provider && (provider.pollingInterval === 4000 || !provider.pollingInterval)) {
