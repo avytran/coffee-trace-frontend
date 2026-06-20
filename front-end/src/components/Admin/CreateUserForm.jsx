@@ -49,6 +49,8 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (submitting) return;
+
     const walletAddress = formData.wallet_address.trim();
     const walletRegex = /^0x[a-fA-F0-9]{40}$/;
     
@@ -88,12 +90,20 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
       await ensureHardhatNetwork();
       
       const provider = getEthersProvider();
+      
+      if (provider && (provider.pollingInterval === 4000 || !provider.pollingInterval)) {
+        provider.pollingInterval = 15000;
+      }
+
       const signer = await getEthersSigner(provider);
       const contract = createContract(USER_REGISTRY_ADDRESS, USER_REGISTRY_ABI, signer);
       const roleIndex = ROLE_INDEX_MAP[formData.role];
       
       setLoadingStatus("Vui lòng mở ví MetaMask và xác nhận giao dịch đăng ký...");
-      const tx = await contract.registerUser(walletAddress, roleIndex);
+      
+      const tx = await contract.registerUser(walletAddress, roleIndex, {
+        gasLimit: 300000
+      });
 
       setLoadingStatus("Giao dịch đang được xử lý trên Blockchain... Vui lòng đợi block xác nhận.");
       const receipt = await tx.wait();
@@ -105,8 +115,9 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
         txHash: tx.hash
       });
       
+      setSubmitting(false); 
+
       if (syncResponse.data.success) {
-        setSubmitting(false); 
         setModalConfig({
           isOpen: true,
           title: "Cấp Quyền Thành Công! ",
@@ -122,7 +133,6 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
     } catch (err) {
       console.error("Lỗi hệ thống trong luồng xử lý hỗn hợp:", err);
       setSubmitting(false);
-      
       setModalConfig(parseWeb3Error(err));
     }
   };
@@ -148,10 +158,11 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
             type="text"
             name="name"
             required
+            disabled={submitting}
             value={formData.name}
             onChange={handleInputChange}
             placeholder="Nhập tên hiển thị hoặc tên cơ sở..."
-            className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm focus:ring-2 focus:ring-forest-500 bg-white text-forest-900"
+            className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm focus:ring-2 focus:ring-forest-500 bg-white text-forest-900 disabled:bg-coffee-100 disabled:text-forest-400"
           />
         </div>
 
@@ -164,10 +175,11 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
             type="text"
             name="wallet_address"
             required
+            disabled={submitting}
             value={formData.wallet_address}
             onChange={handleInputChange}
             placeholder="0x..."
-            className="w-full px-4 py-3 rounded-xl border border-coffee-200 font-mono text-sm focus:ring-2 focus:ring-forest-500 bg-white text-forest-900"
+            className="w-full px-4 py-3 rounded-xl border border-coffee-200 font-mono text-sm focus:ring-2 focus:ring-forest-500 bg-white text-forest-900 disabled:bg-coffee-100 disabled:text-forest-400"
           />
         </div>
 
@@ -179,9 +191,10 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           <select
             name="role"
             required
+            disabled={submitting}
             value={formData.role}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm font-semibold focus:ring-2 focus:ring-forest-500 bg-white text-forest-900"
+            className="w-full px-4 py-3 rounded-xl border border-coffee-200 text-sm font-semibold focus:ring-2 focus:ring-forest-500 bg-white text-forest-900 disabled:bg-coffee-100 disabled:text-forest-400"
           >
             <option value="FARMER">Nông Dân (FARMER)</option>
             <option value="COOPERATIVE">Hợp Tác Xã (COOPERATIVE)</option>
@@ -196,17 +209,27 @@ const CreateUserForm = ({ onClose, onSuccess }) => {
           {onClose && (
             <button
               type="button"
+              disabled={submitting}
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-sm font-medium text-forest-700 bg-coffee-100 hover:bg-coffee-200 transition-colors"
+              className="px-5 py-2.5 rounded-xl text-sm font-medium text-forest-700 bg-coffee-100 hover:bg-coffee-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hủy bỏ
             </button>
           )}
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-forest-800 hover:bg-forest-900 transition-all flex items-center gap-2"
+            disabled={submitting}
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-forest-800 hover:bg-forest-900 transition-all flex items-center gap-2 disabled:bg-forest-400 disabled:cursor-not-allowed"
           >
-            <i className="fa-solid fa-wallet"></i> Lưu
+            {submitting ? (
+              <>
+                <i className="fa-solid fa-circle-notch animate-spin"></i> Đang ghi chuỗi...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-wallet"></i> Lưu
+              </>
+            )}
           </button>
         </div>
       </form>
