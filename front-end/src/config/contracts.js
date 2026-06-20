@@ -1,13 +1,6 @@
-/**
- * Tập trung quản lý địa chỉ Smart Contract hệ thống Coffee Traceability
- * Tự động chuyển đổi địa chỉ động dựa trên biến môi trường (.env)
- */
-
-// 💡 Nhận diện môi trường (Hỗ trợ cả Vite và Create React App)
 const env = import.meta.env?.VITE_NODE_ENV || process.env?.REACT_APP_NODE_ENV || 'local';
 const isSepolia = env === 'sepolia';
 
-// 💡 Trích xuất địa chỉ theo môi trường được kích hoạt
 const USER_REGISTRY_ADDR = isSepolia 
   ? (import.meta.env?.VITE_SEPOLIA_USER_REGISTRY || process.env?.REACT_APP_SEPOLIA_USER_REGISTRY)
   : (import.meta.env?.VITE_LOCAL_USER_REGISTRY || process.env?.REACT_APP_LOCAL_USER_REGISTRY);
@@ -21,19 +14,16 @@ const EVENT_REGISTRY_ADDR = isSepolia
   : (import.meta.env?.VITE_LOCAL_EVENT_REGISTRY || process.env?.REACT_APP_LOCAL_EVENT_REGISTRY);
 
 export const CONTRACT_ADDRESSES = {
-  // 1️⃣ Contract Quản lý danh tính và phân quyền đối tác
   USER_REGISTRY: {
     address: USER_REGISTRY_ADDR,
     name: "User Registry Contract",
     description: "Quản lý đăng ký tài khoản, vai trò (Role) và trạng thái (Status) chuỗi cung ứng.",
   },
-  // 2️⃣ Contract Quản lý vòng đời và quyền sở hữu lô hàng cà phê
   BATCH_REGISTRY: {
     address: BATCH_REGISTRY_ADDR,
     name: "Batch Registry Contract",
     description: "Khởi tạo lô hàng, cập nhật trạng thái chuỗi cung ứng và chuyển giao quyền sở hữu.",
   },
-  // 3️⃣ Contract Sổ cái ghi vết nhật ký bất biến (Audit Log)
   BATCH_EVENT_REGISTRY: {
     address: EVENT_REGISTRY_ADDR,
     name: "Batch Event Registry Contract",
@@ -42,7 +32,6 @@ export const CONTRACT_ADDRESSES = {
 };
 
 export const CONTRACT_ABIS = {
-  // (Giữ nguyên toàn bộ mảng ABI như code cũ của bạn vì ABI không đổi theo mạng công nghệ)
   USER_REGISTRY: [
     "function registerUser(address _wallet, uint8 _role)",
     "function updateUserRole(address _wallet, uint8 _newRole)",
@@ -71,7 +60,6 @@ export const CONTRACT_ABIS = {
   ]
 };
 
-// Các hàm bổ trợ getContractAddress, getContractABI, isValidContractAddress giữ nguyên vẹn...
 export const getContractAddress = (contractName) => {
   const contract = CONTRACT_ADDRESSES[contractName];
   if (!contract || !contract.address) {
@@ -92,5 +80,4 @@ export const isValidContractAddress = (address) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-// Log kiểm tra trạng thái khi ứng dụng React khởi động
-console.log(`📡 [Frontend Web3 Active]: Khởi động dApp trên mạng ${env.toUpperCase()}`);
+console.log(`[Frontend Web3 Active]: Khởi động dApp trên mạng ${env.toUpperCase()}`);

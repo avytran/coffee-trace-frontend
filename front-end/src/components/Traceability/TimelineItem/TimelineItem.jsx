@@ -1,25 +1,5 @@
 import "./TimelineItem.css";
 
-/**
- * TimelineItem - Nút khối đồ họa trục thời gian
- *
- * Props:
- * @param {object}  item         - Dữ liệu một giai đoạn truy xuất
- * @param {string}  item.id
- * @param {string}  item.stage   - Tên giai đoạn (vd: "Thu Hoạch & Phân Loại")
- * @param {string}  item.unit    - Đơn vị thực hiện
- * @param {string}  item.date    - Ngày ghi nhận (vd: "15/10/2025")
- * @param {string}  item.time    - Giờ ghi nhận (vd: "08:30 AM")
- * @param {string}  item.icon    - FontAwesome class icon (vd: "fa-solid fa-leaf")
- * @param {object}  item.avatar  - { src, alt } hoặc null (dùng icon thay thế)
- * @param {string}  item.avatarIcon - FA icon class nếu không có ảnh
- * @param {string}  item.avatarBg  - Tailwind bg class cho avatar icon
- * @param {array}   item.details - [{label, value}] hiển thị trong info box
- * @param {array}   item.attachments - [{icon, iconColor, name}]
- * @param {string}  item.txHash  - Mã băm blockchain (vd: "0x8f2a...9c41")
- * @param {string}  item.etherscanUrl - URL Etherscan
- * @param {boolean} item.isLast  - true nếu là node cuối cùng (ẩn connector line)
- */
 const TimelineItem = ({ item }) => {
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -64,7 +44,6 @@ const TimelineItem = ({ item }) => {
         {item.details && item.details.length > 0 && (
           <div className="bg-coffee-50 rounded-lg p-4 mb-4 border border-coffee-100">
             {item.transportFrom ? (
-              /* Transport layout: From → To */
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex-1">
                   <span className="text-forest-500 block text-xs">Từ</span>

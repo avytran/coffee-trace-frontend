@@ -4,13 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 ::-webkit-scrollbar        { width: 8px; }
 ::-webkit-scrollbar-track  { background: #FDF8F5; }
 ::-webkit-scrollbar-thumb  { background: #DDB892; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #B08968; }
 
-/* ── Utility layers ── */
+/* Utility layers */
 @layer components {
   .glass-panel {
     background: rgba(255, 255, 255, 0.75);

@@ -98,16 +98,13 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
           </div>
         </div>
 
-        {/* 🛠️ KHU VỰC ĐỘNG: Render Nút bấm & Modal của từng Role truyền vào */}
         <div className="flex items-center gap-3 self-end sm:center">
           {actionComponent && React.cloneElement(actionComponent, { lotInfo, extendedDetails, onRefresh: fetchBatchDetailData })}
           <Badge status={lotInfo?.status} />
         </div>
       </div>
 
-      {/* Layout lưới hiển thị thông tin tĩnh */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Cột trái */}
         <div className="lg:col-span-5 space-y-6">
           <Card className="p-6 bg-white border" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-4 pb-2 border-b flex items-center gap-2" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>
@@ -151,7 +148,6 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
             </div>
           </Card>
 
-          {/* Minh chứng IPFS */}
           <Card className="p-6 bg-white border" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-4 pb-2 border-b flex items-center gap-2" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>
               Minh Chứng Chuỗi Cung Ứng (IPFS)
@@ -179,7 +175,6 @@ export function BatchDetail({ batchId, onBack, actionComponent }) {
           </Card>
         </div>
 
-        {/* Cột phải: Nhật ký thời gian thực Blockchain */}
         <div className="lg:col-span-7">
           <Card className="p-6 bg-white border h-full" style={{ borderColor: COLORS.coffee100 }}>
             <h3 className="text-base font-bold mb-6 pb-2 border-b flex items-center justify-between" style={{ color: COLORS.forest900, borderColor: COLORS.coffee100 }}>

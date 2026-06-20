@@ -11,29 +11,24 @@ export default function ConnectWallet() {
     account, network, role, userData, authStatus, connecting, error, connectMetaMask
   } = useWeb3Auth();
 
-  // 💡 ĐỌC MÔI TRƯỜNG HIỆN TẠI TỪ FILE ENV FRONTEND
   const targetEnv = import.meta.env?.VITE_NODE_ENV || 'local';
   const isSepoliaTarget = targetEnv === 'sepolia';
 
-  // 💡 HÀM HỖ TRỢ NGƯỜI DÙNG CHUYỂN MẠNG NHANH TRÊN METAMASK
   const handleSwitchNetwork = async () => {
     if (!window.ethereum) return;
     try {
       if (isSepoliaTarget) {
-        // Yêu cầu chuyển sang Sepolia Testnet
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0xaa36a7' }], // 11155111 dạng Hex
+          params: [{ chainId: '0xaa36a7' }],
         });
       } else {
-        // Yêu cầu chuyển sang Hardhat Localhost
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x7cd7' }], // 31337 dạng Hex
+          params: [{ chainId: '0x7cd7' }],
         });
       }
     } catch (switchError) {
-      // Nếu mạng Localhost chưa được thêm vào MetaMask, tiến hành cấu hình thêm tự động
       if (switchError.code === 4902 && !isSepoliaTarget) {
         try {
           await window.ethereum.request({
@@ -92,7 +87,6 @@ export default function ConnectWallet() {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* NÚT BẤM KẾT NỐI CHÍNH */}
                 {isWrongNetwork ? (
                   <button
                     type="button"
@@ -123,7 +117,6 @@ export default function ConnectWallet() {
                 )}
               </div>
 
-              {/* HIỂN THỊ CẢNH BÁO SAI MẠNG HOẶC LỖI HỆ THỐNG */}
               {isWrongNetwork && (
                 <div className="p-4 rounded-xl text-sm border bg-amber-50 text-amber-800 border-amber-200">
                   <strong>Sai cấu hình chuỗi:</strong> Hệ thống yêu cầu môi trường mạng <b>{isSepoliaTarget ? 'Sepolia Testnet' : 'Hardhat Local'}</b>. Vui lòng nhấn nút chuyển đổi mạng để đồng bộ hóa dữ liệu.
@@ -138,7 +131,6 @@ export default function ConnectWallet() {
               )}
             </div>
 
-            {/* THẺ BÊN PHẢI: CHI TIẾT TRẠNG THÁI VÍ */}
             <div className="relative rounded-[2rem] border border-coffee-200 bg-white/95 p-8 shadow-2xl overflow-hidden">
               <div className="relative z-10 space-y-6">
                 <div className="flex items-center justify-between gap-4">

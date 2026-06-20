@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // 👈 Thêm useNavigate ở đây
+import { Link, useNavigate } from 'react-router-dom';
 import {
   motion,
   useInView,
@@ -7,18 +7,12 @@ import {
   animate,
 } from 'framer-motion';
 
-/* ─────────────────────────────────────────────
-   Animated counter (replaces old JS setInterval)
-   Fix: MotionValue cannot be used as React child directly.
-   We subscribe to the MotionValue and store it in local state.
-───────────────────────────────────────────── */
 function AnimatedCounter({ target, suffix = '', duration = 2 }) {
   const ref = useRef(null);
   const isIn = useInView(ref, { once: true, margin: '-80px' });
   const count = useMotionValue(0);
   const [display, setDisplay] = useState('0');
 
-  // Subscribe MotionValue → local state for safe rendering
   useEffect(() => {
     const unsubscribe = count.on('change', (v) => {
       setDisplay(Math.round(v).toLocaleString('vi-VN'));
@@ -42,9 +36,6 @@ function AnimatedCounter({ target, suffix = '', duration = 2 }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   Fade-up variant for scroll sections
-───────────────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
@@ -71,9 +62,6 @@ function ScrollReveal({ children, className = '', delay = 0, once = true }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   STAT cards data
-───────────────────────────────────────────── */
 const STATS = [
   { icon: 'fa-tractor', bg: 'bg-forest-100', color: 'text-forest-600', target: 2450, suffix: '+', label: 'Nông dân tham gia' },
   { icon: 'fa-boxes-stacked', bg: 'bg-coffee-200', color: 'text-forest-800', target: 18400, suffix: '+', label: 'Lô hàng xác thực' },
@@ -81,9 +69,6 @@ const STATS = [
   { icon: 'fa-handshake-angle', bg: 'bg-coffee-400', color: 'text-white', target: 85, suffix: '+', label: 'Đối tác thương mại' },
 ];
 
-/* ─────────────────────────────────────────────
-   JOURNEY steps
-───────────────────────────────────────────── */
 const JOURNEY = [
   {
     icon: 'fa-leaf',
@@ -107,9 +92,6 @@ const JOURNEY = [
   },
 ];
 
-/* ─────────────────────────────────────────────
-   FEATURED BATCHES
-───────────────────────────────────────────── */
 const BATCHES = [
   { name: 'Robusta Cư M\'gar', meta: 'Độ ẩm 12.5%, Sàng 18, Washed', score: '95đ', img: 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=500&q=80' },
   { name: 'Arabica Cầu Đất', meta: 'Độ cao 1500m, Honey', score: '92đ', img: 'https://images.unsplash.com/photo-1620054703953-b9cc9c62c3f8?w=500&q=80' },
@@ -117,25 +99,19 @@ const BATCHES = [
   { name: 'Blend Đặc Biệt', meta: '70% Robusta, 30% Arabica, Medium Roast', score: '96đ', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80' },
 ];
 
-/* ─────────────────────────────────────────────
-   PAGE COMPONENT
-───────────────────────────────────────────── */
 export default function Home() {
-  const navigate = useNavigate(); // 👈 Khởi tạo hook điều hướng
-  const [searchId, setSearchId] = useState(''); // 👈 Khởi tạo state quản lý mã nhập
+  const navigate = useNavigate();
+  const [searchId, setSearchId] = useState('');
 
-  // Hàm xử lý khi người dùng nhấn nút Tra Cứu hoặc Enter
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchId.trim()) return;
 
-    // Điều hướng sang trang /trace kèm theo query parameter 'id'
     navigate(`/trace?id=${encodeURIComponent(searchId.trim())}`);
   };
 
   return (
     <>
-      {/* ── HERO ── */}
       <section className="relative pt-16 pb-24 md:pt-28 md:pb-32 bg-brand-lightgreen overflow-hidden">
         {/* Cream background blob */}
         <div className="absolute top-0 left-0 w-[85%] md:w-[65%] h-full bg-[#F3EFE9] rounded-br-full z-0" />
@@ -207,7 +183,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── JOURNEY ── */}
       <section id="journey" className="py-24 bg-white text-forest-900 relative">
         <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
           <ScrollReveal className="text-center max-w-3xl mx-auto mb-16">
@@ -250,7 +225,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── STATISTICS (with animated counters) ── */}
       <section id="statistics" className="py-24 bg-brand-creambg relative">
         <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -305,7 +279,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── NEW SEASON BANNER ── */}
       <section className="py-16 bg-white">
         <div className="max-w-[1100px] mx-auto px-6">
           <ScrollReveal>
@@ -339,7 +312,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURED BATCHES ── */}
       <section className="py-24 bg-brand-creambg">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
           <ScrollReveal className="text-center mb-20">

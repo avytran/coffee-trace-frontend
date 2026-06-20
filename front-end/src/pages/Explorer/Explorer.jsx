@@ -11,9 +11,6 @@ const Explorer = () => {
     const [sortOrder, setSortOrder] = useState("newest");
     const inputRef = useRef(null);
 
-    /**
-     * ── 🛡️ BỘ LỌC VÀ KIỂM SOÁT INPUT TRƯỚC KHI GỬI (VALIDATION) ─────────────────
-     */
     const validateInput = (input) => {
         const cleanInput = input.trim();
 
@@ -21,16 +18,12 @@ const Explorer = () => {
             return { isValid: false, message: "Vui lòng nhập mã lô hàng hoặc TxHash để tra cứu!" };
         }
 
-        // 1. Regex kiểm tra UUID v4 (Mã định danh lô hàng chuẩn quốc tế)
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         
-        // 2. Regex kiểm tra TxHash Blockchain (Ethereum/Sepolia chuẩn 66 ký tự)
         const txHashRegex = /^0x[0-9a-f]{64}$/i;
 
-        // 3. Regex kiểm tra mã lô rút gọn tùy chỉnh nội bộ (Ví dụ: LOT-8492 hoặc chuỗi chữ-số từ 4-12 ký tự)
         const customLotRegex = /^(LOT-\d+|\w{4,12})$/i;
 
-        // Tiến hành đối soát dữ liệu đầu vào
         if (uuidRegex.test(cleanInput)) {
             return { isValid: true, type: "UUID", value: cleanInput };
         }
@@ -41,21 +34,17 @@ const Explorer = () => {
             return { isValid: true, type: "CUSTOM_LOT", value: cleanInput.toUpperCase() };
         }
 
-        // Trả về cảnh báo nếu không trùng khớp bất cứ định dạng an toàn nào
         return { 
             isValid: false, 
             message: "Định dạng không hợp lệ! Vui lòng nhập đúng mã UUID lô hàng, chuỗi ký tự hợp lệ, hoặc TxHash bắt đầu bằng '0x'." 
         };
     };
 
-    // ── Gọi API lấy dữ liệu thực từ hệ thống ─────────────────────────────────
     const fetchLotData = async (targetId) => {
-        // Thực thi kiểm soát đầu vào nghiêm ngặt
         const validation = validateInput(targetId);
         
         if (!validation.isValid) {
             setError(validation.message);
-            // Kích hoạt hiệu ứng lắc nhẹ thanh input hoặc focus để người dùng nhận biết
             inputRef.current?.focus();
             return;
         }
@@ -64,7 +53,6 @@ const Explorer = () => {
         setError(null);
         
         try {
-            // Sử dụng giá trị đã được làm sạch và chuẩn hóa hóa chữ hoa/thường từ bộ validation
             const res = await axiosInstance.get(`/public/lots/${validation.value}`);
             setLotData(res.data);
         } catch (err) {
@@ -85,7 +73,6 @@ const Explorer = () => {
         if (e.key === "Enter") handleSearch();
     };
 
-    // ── Chức năng tải xuống QR Code trực tiếp từ giao diện ────────────────────
     const handleDownloadQR = () => {
         if (!lotData?.qrCodeUrl) return;
         const link = document.createElement("a");
@@ -96,7 +83,6 @@ const Explorer = () => {
         document.body.removeChild(link);
     };
 
-    // ── Xử lý đảo chiều Timeline động theo lựa chọn bộ lọc ─────────────────
     const sortedTimeline = lotData?.timeline
         ? [...lotData.timeline].sort((a, b) => {
               const parseDate = (dStr) => new Date(dStr.split("/").reverse().join("-"));
@@ -111,7 +97,6 @@ const Explorer = () => {
             <main className="flex-grow pt-10 pb-16">
                 <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
                     
-                    {/* Thanh công cụ tìm kiếm chính */}
                     <div className="mb-10 flex flex-col lg:flex-row gap-6 lg:items-center justify-between">
                         <div className="flex-1 max-w-2xl">
                             <h1 className="text-3xl font-bold text-forest-900 mb-4">Tra Cứu Chuỗi Cung Ứng Cà Phê</h1>
@@ -122,7 +107,7 @@ const Explorer = () => {
                                     value={query}
                                     onChange={(e) => {
                                         setQuery(e.target.value);
-                                        if (error) setError(null); // Xóa thông báo lỗi ngay khi người dùng gõ lại
+                                        if (error) setError(null);
                                     }}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Dán mã định danh UUID, mã lô (LOT-xxxx), hoặc TxHash Blockchain..."
@@ -148,7 +133,6 @@ const Explorer = () => {
                         </div>
                     </div>
 
-                    {/* Màn hình chờ: Khi người dùng chưa thực hiện hành động tra cứu */}
                     {!loading && !lotData && !error && (
                         <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-coffee-200 rounded-2xl bg-white/40">
                             <i className="fa-solid fa-shield-search text-coffee-300 text-5xl mb-4 animate-pulse"></i>
@@ -157,21 +141,17 @@ const Explorer = () => {
                         </div>
                     )}
 
-                    {/* Hiệu ứng nạp dữ liệu */}
                     {loading && (
                         <div className="flex items-center justify-center py-20">
                             <i className="fa-solid fa-circle-notch fa-spin text-emerald-600 text-3xl"></i>
                         </div>
                     )}
 
-                    {/* Render thông tin động sau khi có kết quả trả về */}
                     {!loading && lotData && (
                         <div className="flex flex-col lg:flex-row gap-8">
                             
-                            {/* Cột trái: Hiển thị Timeline cốt lõi */}
                             <div className="flex-1">
                                 
-                                {/* Khối Tổng Overview Lô Hàng */}
                                 <div className="glass-panel p-6 rounded-[1rem] border border-coffee-200/50 shadow-sm mb-8 relative overflow-hidden bg-white">
                                     <div className="flex flex-col md:flex-row justify-between gap-6 relative z-10">
                                         <div>
@@ -201,7 +181,6 @@ const Explorer = () => {
                                             </div>
                                         </div>
 
-                                        {/* Khối sinh QR Code và Download */}
                                         <div className="md:w-44 flex-shrink-0 flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl border border-gray-100">
                                             <img className="w-24 h-24 object-contain bg-white p-1 rounded-md border shadow-2xs mb-2" src={lotData.qrCodeUrl} alt="Hệ thống QR" />
                                             <button onClick={handleDownloadQR} className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition-colors">
@@ -211,7 +190,6 @@ const Explorer = () => {
                                     </div>
                                 </div>
 
-                                {/* Khối Dòng chảy thời gian cốt lõi */}
                                 <div className="relative pl-4 md:pl-10">
                                     <div className="absolute left-[39px] md:left-[63px] top-6 bottom-10 w-0.5 bg-coffee-200 z-0"></div>
                                     

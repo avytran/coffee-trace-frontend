@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { useWeb3Auth } from '../../context/Web3AuthContext'; // 🌟 Import context để lấy trạng thái phân quyền
+import { useWeb3Auth } from '../../context/Web3AuthContext';
 
 const NAV_LINKS = [
   { to: '/', label: 'Trang Chủ' },
@@ -36,11 +36,9 @@ export default function Navbar() {
     >
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
 
-        {/* 🌟 NHÓM 1: Gôm cụm Logo và Navigation sát nhau bên trái */}
         <div className="flex items-center gap-10">
-          {/* gap-10 tạo khoảng cách vừa vặn giữa Logo và phần tử đầu tiên của Nav, có thể sửa thành gap-8 hoặc gap-12 tùy ý */}
 
-          {/* ── Logo ── */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-600 to-forest-900 flex items-center justify-center shadow-lg shadow-forest-900/20 group-hover:scale-105 transition-transform">
               <i className="fa-solid fa-seedling text-white text-xl" />
@@ -48,7 +46,7 @@ export default function Navbar() {
             <span className="font-serif text-2xl font-bold text-forest-900 tracking-tight">ROBUSTRACE</span>
           </Link>
 
-          {/* ── Desktop Nav ── */}
+          {/* Desktop Nav */}
           <nav className="hidden xl:flex items-center gap-1">
             {NAV_LINKS.map(({ to, label }) => (
               <NavLink
@@ -66,7 +64,6 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {/* Các Link đặc quyền khi authStatus === 'ACTIVE' */}
             {authStatus === 'ACTIVE' && (
               <>
                 <div className="w-px h-4 bg-coffee-300 mx-2" />
@@ -100,7 +97,6 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* ── NHÓM 2: Khối CTA / Wallet Hub nằm độc lập bên phải ── */}
         <div className="flex items-center gap-4">
           {authStatus === 'ACTIVE' && account ? (
             <div className="flex items-center gap-3 bg-coffee-50 border border-coffee-200 pl-4 pr-2 py-1.5 rounded-xl shadow-xs">
@@ -137,10 +133,9 @@ export default function Navbar() {
 
       </div>
 
-      {/* ── Mobile Side Menu ── */}
+      {/* Mobile Side Menu */}
       {mobileOpen && (
         <div className="xl:hidden bg-white border-t border-coffee-100 px-6 py-4 flex flex-col gap-1 shadow-lg animate-fadeIn">
-          {/* Menu thông thường */}
           {NAV_LINKS.map(({ to, label }) => (
             <NavLink
               key={to}
@@ -156,7 +151,6 @@ export default function Navbar() {
             </NavLink>
           ))}
 
-          {/* Menu bảo mật trên Mobile */}
           {authStatus === 'ACTIVE' && (
             <>
               <div className="h-px bg-coffee-100 my-2" />
